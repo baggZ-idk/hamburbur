@@ -21,7 +21,8 @@ public class ButtonCollider : MonoBehaviour
     private float               nextHoldTime;
     public  Action              OnHold;
 
-    public Action OnPress;
+    public Action                    OnPress;
+    public Func<ButtonPresser, bool> OnPhysicalPress;
 
     private void Awake()
     {
@@ -133,6 +134,13 @@ public class ButtonCollider : MonoBehaviour
 
         lastTime      = Time.time;
         lastTimeLocal = Time.time;
+
+        if (presser != null && OnPhysicalPress?.Invoke(presser) == true)
+        {
+            buttonPressAnimator.PlayIndicator();
+
+            return true;
+        }
 
         OnPress.Invoke();
         buttonPressAnimator.Play();

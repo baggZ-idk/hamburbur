@@ -23,12 +23,12 @@ public class ArrayListOverlay : MonoBehaviour
     private const    int             MaxColumns       = 3;
     private readonly float[]         columnRightEdges = new float[MaxColumns];
     private readonly float[]         columnWidths     = new float[MaxColumns];
-    private readonly HashSet<string> enabledNames     = new();
+    private readonly HashSet<string> enabledNames     = [];
 
     private readonly Dictionary<string, ArrayListEntry> entries      = new();
-    private readonly List<string>                       removalCache = new();
+    private readonly List<string>                       removalCache = [];
 
-    private readonly List<string> sortedNames = new();
+    private readonly List<string> sortedNames = [];
 
     private float badgeWidth;
 
@@ -175,8 +175,7 @@ public class ArrayListOverlay : MonoBehaviour
             {
                 foreach ((Type _, hamburburmod mod) in category.Value)
                 {
-                    if (mod == null  ||
-                        !mod.Enabled ||
+                    if (mod is not { Enabled: true, } ||
                         mod.AssociatedAttribute.ButtonType != ButtonType.Togglable)
                         continue;
 
@@ -220,6 +219,8 @@ public class ArrayListOverlay : MonoBehaviour
 
     private void DrawArrayList()
     {
+        titleContent.text = MenuHandler.GetMenuTitle();
+        
         if (headerMeasurementsDirty)
         {
             UpdateHeaderMeasurements();
@@ -241,8 +242,8 @@ public class ArrayListOverlay : MonoBehaviour
 
         LayoutMetrics layout = cachedLayout;
 
-        Color mainColor      = Plugin.Instance.MainColour;
-        Color secondaryColor = Plugin.Instance.SecondaryColour;
+        Color mainColor      = MenuHandler.Instance.currentMainColour;
+        Color secondaryColor = MenuHandler.Instance.currentSecondaryColour;
 
         modStyle.normal.textColor = WithAlpha(
                 Color.Lerp(mainColor, Color.white, 0.92f),

@@ -17,8 +17,9 @@ public static class MysteryTagState
     private static readonly HashSet<int> DeadPlayers = [];
 
     private static bool   initialized;
-    private static string currentRoomName;
-    private static bool   statusRequested;
+    private static Photon.Realtime.Room currentRoom;
+    private static float  nextStatusRequestTime;
+    private static bool   wasInRoom;
 
     public static int? MurdererActorNumber { get; private set; }
     public static int? SheriffActorNumber  { get; private set; }
@@ -57,24 +58,39 @@ public static class MysteryTagState
         EnsureInitialized();
         PrepareForCurrentRoom();
 
-        if (statusRequested || !PhotonNetwork.InRoom || PhotonNetwork.LocalPlayer == null)
+        if (!PhotonNetwork.InRoom || PhotonNetwork.LocalPlayer == null)
+        {
+            wasInRoom = false;
+            return;
+        }
+
+        if (!wasInRoom)
+        {
+            wasInRoom = true;
+            ResetRoundState();
+            VotingActive = false;
+            nextStatusRequestTime = 0f;
+        }
+
+        if (UnityEngine.Time.time < nextStatusRequestTime)
             return;
 
-        statusRequested = true;
+        nextStatusRequestTime = UnityEngine.Time.time + 2f;
         MysteryTagNetwork.Send(
                 MysteryTagEvents.WhatGameStatus,
-                (double)PhotonNetwork.LocalPlayer.ActorNumber);
+                (double)MysteryTagNetwork.LocalPlayerId);
     }
 
     private static void PrepareForCurrentRoom()
     {
-        string roomName = PhotonNetwork.InRoom ? PhotonNetwork.CurrentRoom?.Name : null;
+        Photon.Realtime.Room room = PhotonNetwork.InRoom ? PhotonNetwork.CurrentRoom : null;
 
-        if (roomName == currentRoomName)
+        if (ReferenceEquals(room, currentRoom))
             return;
 
-        currentRoomName = roomName;
-        statusRequested = false;
+        currentRoom = room;
+        nextStatusRequestTime = 0f;
+        wasInRoom = PhotonNetwork.InRoom;
         ResetRoundState();
         VotingActive = false;
     }

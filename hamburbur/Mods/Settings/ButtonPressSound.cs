@@ -24,12 +24,11 @@ public class ButtonPressSound : hamburburmod
             "Watch",
             "Creamy",
             "Minimal",
+            "Boop",
             "Glass",
             "Krisp Wood",
             "Rustic Click",
             "Drip",
-            "Jman Okay",
-            "Jman Ahhhh",
     ];
 
     public static   ButtonPressSound Instance { get; private set; }

@@ -1,3 +1,4 @@
+using hamburbur.GUI;
 using hamburbur.Tools;
 using UnityEngine;
 
@@ -31,8 +32,8 @@ public class ColourChanger : MonoBehaviour
         float time = Mathf.PingPong(elapsedTime, 1f);
 
         if (useMeshRenderer)
-            meshRenderer.material.color = Color.Lerp(new Color(Plugin.Instance.MainColour.r, Plugin.Instance.MainColour.g, Plugin.Instance.MainColour.b, alpha), new Color(Plugin.Instance.SecondaryColour.r, Plugin.Instance.SecondaryColour.g, Plugin.Instance.SecondaryColour.b, alpha), time);
+            meshRenderer.material.color = Color.Lerp(new Color(MenuHandler.Instance.currentMainColour.r, MenuHandler.Instance.currentMainColour.g, MenuHandler.Instance.currentMainColour.b, alpha), new Color(MenuHandler.Instance.currentSecondaryColour.r, MenuHandler.Instance.currentSecondaryColour.g, MenuHandler.Instance.currentSecondaryColour.b, alpha), time);
         else
-            renderer.material.color = Color.Lerp(new Color(Plugin.Instance.MainColour.r, Plugin.Instance.MainColour.g, Plugin.Instance.MainColour.b, alpha), new Color(Plugin.Instance.SecondaryColour.r, Plugin.Instance.SecondaryColour.g, Plugin.Instance.SecondaryColour.b, alpha), time);
+            renderer.material.color = Color.Lerp(new Color(MenuHandler.Instance.currentMainColour.r, MenuHandler.Instance.currentMainColour.g, MenuHandler.Instance.currentMainColour.b, alpha), new Color(MenuHandler.Instance.currentSecondaryColour.r, MenuHandler.Instance.currentSecondaryColour.g, MenuHandler.Instance.currentSecondaryColour.b, alpha), time);
     }
 }

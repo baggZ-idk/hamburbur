@@ -62,18 +62,23 @@ public class LoadingScreenManager : Singleton<LoadingScreenManager>
         gameObject.Obliterate();
     }
 
-    public IEnumerator TutorialScreen()
+    public static IEnumerator TutorialScreen()
     {
         GTPlayer.Instance.disableMovement = true;
 
-        GameObject tutorialScreen = Instantiate(Plugin.Instance.HamburburBundle.LoadAsset<GameObject>(nameof(TutorialScreen)));
+        yield return new WaitForSeconds(3f);
 
-        //Already contains the video url and play on awake is true in the asset bundle
+        GameObject tutorialScreen = Instantiate(Plugin.Instance.HamburburBundle.LoadAsset<GameObject>("TutorialScreen"));
+        tutorialScreen.transform.position = new Vector3(-68.0419f, 11.95f, -83.5273f);
+        tutorialScreen.transform.rotation = Quaternion.Euler(0f, 70f, 0f);
+
+        // Already contains the video URL and Play On Awake is true in the AssetBundle
         VideoPlayer player = tutorialScreen.GetComponent<VideoPlayer>();
 
-        bool shouldClose = false;
+        bool shouldClose  = false;
+        bool videoStarted = false;
 
-        //Exit Button
+        // Exit Button
         tutorialScreen.transform.GetChild(0).AddComponent<ButtonCollider>().OnPress += () => shouldClose = true;
 
         player.loopPointReached += _ => shouldClose = true;
@@ -83,7 +88,20 @@ public class LoadingScreenManager : Singleton<LoadingScreenManager>
             if (tutorialScreen == null)
                 yield break;
 
-            float distance = Vector3.Distance(GTPlayer.Instance.bodyCollider.transform.position, tutorialScreen.transform.position);
+            if (player.isPlaying)
+                videoStarted = true;
+
+            if (videoStarted && !player.isPlaying)
+            {
+                shouldClose = true;
+
+                continue;
+            }
+
+            float distance = Vector3.Distance(
+                    GTPlayer.Instance.bodyCollider.transform.position,
+                    tutorialScreen.transform.position
+            );
 
             if (distance > 10f)
                 shouldClose = true;
@@ -96,7 +114,7 @@ public class LoadingScreenManager : Singleton<LoadingScreenManager>
         CoroutineManager.Instance.StartCoroutine(ShrinkAndDestroy(tutorialScreen));
     }
 
-    private IEnumerator ShrinkAndDestroy(GameObject obj)
+    private static IEnumerator ShrinkAndDestroy(GameObject obj)
     {
         const float Duration = 0.25f;
         float       time     = 0f;

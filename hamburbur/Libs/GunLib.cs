@@ -110,7 +110,7 @@ public class GunLib
 
         targetMarkerRenderer = targetMarker.GetComponent<Renderer>();
         if (targetMarkerRenderer != null)
-            targetMarkerRenderer.material = new Material(Shaders.UberShader);
+            targetMarkerRenderer.material = new Material(Shaders.TextShader);
     }
 
     public void OnDisable()

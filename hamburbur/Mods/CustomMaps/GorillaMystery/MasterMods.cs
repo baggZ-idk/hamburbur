@@ -16,11 +16,7 @@ public class SpawnSheriffPistol : hamburburmod
             return;
 
         Vector3 position = GorillaTagger.Instance.bodyCollider.transform.position;
-        MysteryTagNetwork.Send(
-                MysteryTagEvents.DropGun,
-                (double)position.x,
-                (double)position.y,
-                (double)position.z);
+        MysteryTagNetwork.DropGun(position);
     }
 }
 
@@ -76,11 +72,7 @@ public class MakeSheriffGun : MysteryRoleGun
             return;
 
         Vector3 position = rig.transform.position;
-        MysteryTagNetwork.Send(
-                MysteryTagEvents.DropGun,
-                (double)position.x,
-                (double)position.y,
-                (double)position.z);
+        MysteryTagNetwork.DropGun(position);
 
         MysteryTagNetwork.Send(MysteryTagEvents.ChooseSheriff, (double)rig.Creator.ActorNumber);
     }

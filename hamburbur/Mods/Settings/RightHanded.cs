@@ -17,9 +17,10 @@ public class RightHanded : hamburburmod
         IsEnabled = true;
 
         MenuHandler.Instance.ButtonPresser.transform.SetParent(Tools.Utils.RealLeftController, false);
-        MenuHandler.Instance.ButtonPresser.transform.localPosition                             = new Vector3(0f, -0.01f, 0.13f);
         MenuHandler.Instance.ButtonPresser.GetComponent<ButtonPresser>().isLeft                = true;
         KeyboardManager.Instance.NonDominantButtonPresser.GetComponent<ButtonPresser>().isLeft = false;
+        ChangePointerPosition.ApplyCurrentPosition(MenuHandler.Instance.ButtonPresser, true);
+        ChangePointerPosition.ApplyCurrentPosition(KeyboardManager.Instance.NonDominantButtonPresser, false);
 
         MenuHandler.Instance.Menu.transform.parent.SetParent(Tools.Utils.RealRightController, false);
         MenuHandler.Instance.Menu.transform.parent.transform.localRotation = Plugin.Instance.MenuLocalRotationRight;
@@ -33,9 +34,10 @@ public class RightHanded : hamburburmod
         IsEnabled = false;
 
         MenuHandler.Instance.ButtonPresser.transform.SetParent(Tools.Utils.RealRightController, false);
-        MenuHandler.Instance.ButtonPresser.transform.localPosition                             = new Vector3(0f, -0.01f, 0.13f);
         MenuHandler.Instance.ButtonPresser.GetComponent<ButtonPresser>().isLeft                = false;
         KeyboardManager.Instance.NonDominantButtonPresser.GetComponent<ButtonPresser>().isLeft = true;
+        ChangePointerPosition.ApplyCurrentPosition(MenuHandler.Instance.ButtonPresser, false);
+        ChangePointerPosition.ApplyCurrentPosition(KeyboardManager.Instance.NonDominantButtonPresser, true);
 
         MenuHandler.Instance.Menu.transform.parent.SetParent(Tools.Utils.RealLeftController, false);
         MenuHandler.Instance.Menu.transform.parent.transform.localRotation = Plugin.Instance.MenuLocalRotationLeft;

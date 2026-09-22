@@ -477,6 +477,28 @@ public class Themes : hamburburmod
                 -0.29f,
                 false
             ),
+            
+            (
+                "spm",
+                "SPMidnight",
+                new Vector3(0f, 0f, 0f),
+                Quaternion.Euler(90f, 0f, 0f),
+                new Color(0.1019608f, 0.04313724f, 0.172549f,  1f),
+                new Color(0.7294118f, 0.4039215f,  0.9921568f, 1f),
+                -0.29f,
+                false
+            ),
+            
+            (
+                "hyperion",
+                "Hyperion",
+                new Vector3(0f, 0f, 0f),
+                Quaternion.Euler(90f, 0f, 0f),
+                new Color(0.03921569f, 0.03921569f, 0.05490194f, 1f),
+                new Color(0.108713f,   0.1040406f,  0.1320755f,  1f),
+                -0.29f,
+                false
+            ),
     ];
 
     public static   Themes Instance               { get; private set; }

@@ -10,7 +10,11 @@ namespace hamburbur.Mods.Visual;
         0)]
 public class DisableLeaves : hamburburmod
 {
-    private const int LeavesIndex = 10;
+    private const int LeavesIndex = 17;
+
+    // If you need to update the leaves index above. Get the latest temp file name from https://hamburbur.org/data or get it manually
+    // Then paste it in this constant below and make sure to compile with Constants.BetaBuild as true, enable the mod and look in your logs
+    private const string LeafName = "";
 
     private string LeavesName
     {
@@ -35,6 +39,27 @@ public class DisableLeaves : hamburburmod
     {
         ChangeObjectVisibility(FirstPersonVisuals.FirstPersonOnly);
         FirstPersonVisuals.OnFirstPersonOnlyChange += ChangeObjectVisibility;
+
+        if (Constants.BetaBuild && !LeavesName.IsNullOrEmpty())
+            FindLeavesIndex();
+    }
+
+    private static void FindLeavesIndex()
+    {
+        Transform[] forestChildren = GameObject.Find("Environment Objects/LocalObjects_Prefab/Forest").transform
+                                               .GetComponentsInChildren<Transform>(true)
+                                               .Where(t => t.name.Contains("UnityTempFile"))
+                                               .ToArray();
+
+        for (int index = 0; index < forestChildren.Length; index++)
+        {
+            Transform child = forestChildren[index];
+
+            if (LeafName != child.gameObject.name)
+                continue;
+
+            Debug.Log($"[No Leaves Debug] Index: {index}  |  Name: {child.gameObject.name}");
+        }
     }
 
     protected override void OnDisable()

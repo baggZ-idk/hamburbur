@@ -1,3 +1,4 @@
+using hamburbur.GUI;
 using hamburbur.Managers;
 using hamburbur.Mod_Backend;
 using hamburbur.Tools;
@@ -40,7 +41,7 @@ public class Frozone : hamburburmod
         if (platform.TryGetComponent(out Renderer renderer))
         {
             renderer.material.shader = Shaders.UberShader;
-            renderer.material.color  = Plugin.Instance.MainColour;
+            renderer.material.color  = MenuHandler.Instance.currentMainColour;
         }
 
         platform.transform.localScale = new Vector3(0.015f, 0.28f, 0.28f);

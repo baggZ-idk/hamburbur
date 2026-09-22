@@ -6,5 +6,6 @@ namespace hamburbur.Tools;
 public sealed class ModSaveInfo
 {
     public bool Enabled;
+    public bool Favourite;
     public int  IncrementalValue;
 }

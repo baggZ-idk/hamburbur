@@ -1,4 +1,5 @@
 using GorillaLocomotion;
+using hamburbur.GUI;
 using hamburbur.Managers;
 using hamburbur.Mod_Backend;
 using hamburbur.Tools;
@@ -33,7 +34,7 @@ public class EnderPearl : hamburburmod
                 {
                     pearlMat = new Material(Shader.Find("Universal Render Pipeline/Unlit"))
                     {
-                            color = Plugin.Instance.MainColour,
+                            color = MenuHandler.Instance.currentMainColour,
                     };
 
                     pearlMat.SetFloat("_Surface",  1);

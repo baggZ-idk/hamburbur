@@ -87,6 +87,7 @@ public class WalkerMovement : hamburburmod
                     3f, true, true);
 
             Toggle(ButtonState.Normal, false, false);
+            return;
         }
 
         Vector3 euler = GorillaTagger.Instance.headCollider.transform.eulerAngles;
@@ -111,8 +112,8 @@ public class WalkerMovement : hamburburmod
 
     protected override void OnDisable()
     {
-        GTPlayer.Instance.leftHand.controllerTransform.GetComponent<HandAnimator>().Obliterate();
-        GTPlayer.Instance.rightHand.controllerTransform.GetComponent<HandAnimator>().Obliterate();
+        GTPlayer.Instance.leftHand.controllerTransform.GetComponent<HandAnimator>()?.Obliterate();
+        GTPlayer.Instance.rightHand.controllerTransform.GetComponent<HandAnimator>()?.Obliterate();
     }
 
     private bool IsPlayerGrounded(out float groundDistance)

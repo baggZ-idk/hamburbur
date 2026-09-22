@@ -134,7 +134,7 @@ public static class PCRigPatch
 
     private static void Postfix(VRRig __instance)
     {
-        if (Tools.Utils.InVR || RigUtils.IsRigEnabled || !PCRig.IsEnabled || !__instance.IsLocalRig())
+        if (Tools.Utils.InVR || !PCRig.IsEnabled || !__instance.IsLocalRig())
             return;
 
         switch (PCRig.CurrentRigMode)

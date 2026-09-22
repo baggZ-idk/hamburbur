@@ -5,14 +5,12 @@ public static class Constants
     public const string PluginGuid        = "org.hamburbur.menu";
     public const string PluginName        = nameof(hamburbur);
     public const string PluginDescription = "Gorilla Tag mod menu made with <3 by ZlothY";
-    public const string PluginVersion     = "7.1.0";
-    public const bool   BetaBuild         = true;
+    public const string PluginVersion     = "7.2.0";
+    public const bool   BetaBuild         = false;
 
     public const string HamburburUrl = "https://hamburbur.org";
     public const string WebSocketUri = "wss://api.hamburbur.org/";
-
-    public const string SeralythUrl = "https://menu.seralyth.software";
-
+    
     public const string LocalConsoleObjectGuid = "hamburbur_Console";
 
     public const string HamburgerAscii =

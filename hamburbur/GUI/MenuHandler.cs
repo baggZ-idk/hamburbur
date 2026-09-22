@@ -41,6 +41,7 @@ public class MenuHandler : Singleton<MenuHandler>
     private          Coroutine            typingCoroutine;
     public           bool                 HasDedicatedSearchButton    { get; private set; }
     public           bool                 HasDedicatedCategoryButtons { get; private set; }
+    public           bool                 HasDedicatedDisconnectButton { get; private set; }
 
     public GameObject Menu { get; private set; }
 
@@ -53,7 +54,7 @@ public class MenuHandler : Singleton<MenuHandler>
         ButtonPresser.SetActive(false);
 
         ButtonPresser.transform.SetParent(Tools.Utils.RealRightController);
-        ButtonPresser.transform.localPosition = new Vector3(0f, -0.01f, 0.13f);
+        ChangePointerPosition.ApplyCurrentPosition(ButtonPresser, false);
         ButtonPresser.transform.localScale    = Vector3.zero;
 
         if (ButtonPresser.TryGetComponent(out MeshRenderer meshRenderer))
@@ -231,7 +232,7 @@ public class MenuHandler : Singleton<MenuHandler>
         Transform returnButton = miscButtons.Find("Return");
         Transform searchButton = miscButtons.Find("Search");
 
-        if (disconnect == null || lastPage == null || nextPage == null || returnButton == null)
+        if (!lastPage || !nextPage || !returnButton)
         {
             Debug.LogError($"[hamburbur] Theme {menuPrefab.name} is missing required misc buttons.");
             menu.Obliterate();
@@ -256,12 +257,15 @@ public class MenuHandler : Singleton<MenuHandler>
 
         version.GetComponent<TMP_Text>().text = $"v{Constants.PluginVersion}";
 
-        disconnect.AddComponent<ButtonCollider>().OnPress   = () => NetworkSystem.Instance.ReturnToSinglePlayer();
+        HasDedicatedDisconnectButton = disconnect;
+        if (HasDedicatedDisconnectButton) 
+            disconnect.AddComponent<ButtonCollider>().OnPress   = () => NetworkSystem.Instance.ReturnToSinglePlayer();
+        
         lastPage.AddComponent<ButtonCollider>().OnPress     = LastPage;
         nextPage.AddComponent<ButtonCollider>().OnPress     = NextPage;
         returnButton.AddComponent<ButtonCollider>().OnPress = ReturnToLastCategory;
 
-        HasDedicatedSearchButton = searchButton != null;
+        HasDedicatedSearchButton = searchButton;
         if (HasDedicatedSearchButton)
             searchButton.AddComponent<ButtonCollider>().OnPress = Search.OpenSearch;
 
@@ -383,9 +387,9 @@ public class MenuHandler : Singleton<MenuHandler>
                 continue;
 
             CategoryButton slot = categoryButtonSlots[slotIndex];
-            slot.Text.text        = mod.ModName;
+            slot.Text.text        = Buttons.GetDisplayName(mod);
             slot.Collider.OnPress = () => mod.Toggle(ButtonState.Normal);
-            slot.GameObject.SetActive(true);
+            slot.GameObject.SetActive(Buttons.IsMainCategoryVisible(mod));
         }
 
         bool hasMultiplePages = pageCount > 1;
@@ -964,7 +968,7 @@ public class MenuHandler : Singleton<MenuHandler>
             Instance.MenuName == title &&
             menu.activeSelf;
 
-    private static string GetMenuTitle()
+    public static string GetMenuTitle()
     {
         if (!string.IsNullOrEmpty(CustomMenuName.CurrentName))
             return CustomMenuName.CurrentName;

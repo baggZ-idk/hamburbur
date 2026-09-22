@@ -323,6 +323,7 @@ public sealed class PluginManager : Singleton<PluginManager>
             record.RuntimeModStates[GetTypeName(owned.Type)] = new ModSaveInfo
             {
                     Enabled          = owned.Instance.Enabled,
+                    Favourite        = owned.Instance.IsFavourite,
                     IncrementalValue = owned.Instance.IncrementalValue,
             };
 

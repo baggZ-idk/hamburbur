@@ -17,6 +17,7 @@ public class MenuSoundTheme : hamburburmod
             "Seralyth",
             "Minimal",
             "UI",
+            "MacOS",
     ];
 
     public static MenuSoundTheme Instance { get; private set; }

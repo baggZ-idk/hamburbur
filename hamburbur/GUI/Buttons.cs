@@ -36,6 +36,8 @@ namespace hamburbur.GUI;
 
 public static class Buttons
 {
+    public const string FavouriteModsCategory = "Favourite Mods";
+
     public static readonly Dictionary<string, (Type, hamburburmod)[]> Categories = new()
     {
             [nameof(Main)] =
@@ -44,6 +46,7 @@ public static class Buttons
                     (typeof(Search), null),
                     (typeof(Settings), null),
                     (typeof(EnabledMods), null),
+                    (typeof(FavouriteMods), null),
                     (typeof(Movement), null),
                     (typeof(Room), null),
                     (typeof(Macros), null),
@@ -79,6 +82,8 @@ public static class Buttons
 
             [PluginManager.PluginListCategory] = [],
 
+            [FavouriteModsCategory] = [],
+
             ["Menu Settings"] =
             [
                     (typeof(Themes), null),
@@ -86,10 +91,12 @@ public static class Buttons
                     (typeof(MenuTitleAnimation), null),
                     (typeof(CustomMenuName), null),
                     (typeof(ToggleMenu), null),
+                    (typeof(FavouriteModsSetting), null),
                     (typeof(PrimaryMenuButton), null),
                     (typeof(ChangeMenuSize), null),
                     (typeof(MenuOpenCloseAnimation), null),
                     (typeof(ChangePointerSize), null),
+                    (typeof(ChangePointerPosition), null),
                     (typeof(RightHanded), null),
                     (typeof(AnimateButtons), null),
                     (typeof(ButtonPressAnimation), null),
@@ -177,6 +184,7 @@ public static class Buttons
                     (typeof(ChangePCRig), null),
                     (typeof(MoveHands), null),
                     (typeof(UseRigManager), null),
+                    (typeof(GhostRig), null),
             ],
 
             ["Multiplayer Settings"] =
@@ -235,7 +243,7 @@ public static class Buttons
 
             [nameof(Room)] =
             [
-                    (typeof(Reauthenticate), null),
+                    (typeof(Disconnect), null),
                     (typeof(JoinHamburburCode), null),
                     (typeof(JoinRandom), null),
                     (typeof(JoinPrivate), null),
@@ -246,6 +254,7 @@ public static class Buttons
                     (typeof(USRegion), null),
                     (typeof(USWRegion), null),
                     (typeof(EURegion), null),
+                    (typeof(Reauthenticate), null),
             ],
 
             [nameof(Macros)] =
@@ -323,6 +332,7 @@ public static class Buttons
             [nameof(Rig)] =
             [
                     (typeof(EvolvingCosmeticMenu), null),
+                    (typeof(MaxQuestScore), null),
                     (typeof(PCRig), null),
                     (typeof(RigTweaks), null),
                     (typeof(RigTweaksV2), null),
@@ -390,9 +400,10 @@ public static class Buttons
             [nameof(OP)] =
             [
                     (typeof(EmojiName), null),
+                    (typeof(ForceFriend), null),
                     (typeof(LagGun), null),
-                    (typeof(VStumpCrashGun), null),
-                    (typeof(VStumpCrashAll), null),
+                    //(typeof(VStumpCrashGun), null),
+                    //(typeof(VStumpCrashAll), null),
                     (typeof(ElevatorKickAll), null),
                     (typeof(FuckOffGroupJoining), null),
                     (typeof(TickDoesSomething), null),
@@ -457,6 +468,7 @@ public static class Buttons
                     (typeof(KillSheriff), null),
                     (typeof(KillMurderer), null),
                     (typeof(KillAllInnocents), null),
+                    (typeof(MysteryKillSelf), null),
                     (typeof(MurdererEsp), null),
                     (typeof(SheriffEsp), null),
                     (typeof(InnocentEsp), null),
@@ -468,6 +480,12 @@ public static class Buttons
                     (typeof(MysteryRightHand), null),
                     (typeof(MysteryLeftHand), null),
                     (typeof(BecomeMysterySheriff), null),
+                    (typeof(DropMysteryPistolHere), null),
+                    (typeof(DropMysteryPistolGun), null),
+                    (typeof(MysteryGunshotSoundGun), null),
+                    (typeof(MysteryGunshotSoundSpam), null),
+                    (typeof(MysteryRightHandGun), null),
+                    (typeof(MysteryLeftHandGun), null),
                     (typeof(SpawnSheriffPistol), null),
                     (typeof(MakeMurdererGun), null),
                     (typeof(MakeSheriffGun), null),
@@ -478,6 +496,11 @@ public static class Buttons
                     (typeof(ForceMurdererWin), null),
                     (typeof(ForceInnocentsWin), null),
                     (typeof(SpamMysteryRounds), null),
+                    (typeof(TeleportMysteryLobby), null),
+                    (typeof(TeleportMysteryPistol), null),
+                    (typeof(TeleportMysteryMap1), null),
+                    (typeof(TeleportMysteryMap2), null),
+                    (typeof(TeleportMysteryMap3), null),
             ],
 
             ["Meccha Gorilla"] =
@@ -583,7 +606,6 @@ public static class Buttons
                     (typeof(TortureStupidPeople), null),
                     (typeof(NotifyPresence), null),
                     (typeof(DontDestroyOtherConsoleInstances), null),
-                    (typeof(SeralythServerDataNotifier), null),
                     (typeof(ConsoleAssets), null),
             ],
 
@@ -639,15 +661,42 @@ public static class Buttons
             ],
     };
 
-    public static ValueTuple<Type, hamburburmod>[] GetVisibleCategory(string category) =>
-            Categories.TryGetValue(category, out (Type, hamburburmod)[] mods)
-                    ? mods.Where(mod =>
-                                         (mod.Item2 == null || PluginManager.IsModVisible(mod.Item2)) &&
-                                         !(category                                       == nameof(Main) &&
-                                           MenuHandler.Instance?.HasDedicatedSearchButton == true         &&
-                                           mod.Item1                                      == typeof(Search)))
-                          .ToArray()
-                    : [];
+    public static ValueTuple<Type, hamburburmod>[] GetVisibleCategory(string category)
+    {
+        if (category == FavouriteModsCategory)
+            return GetFavouriteMods();
+
+        return Categories.TryGetValue(category, out (Type, hamburburmod)[] mods)
+                       ? mods.Where(mod =>
+                                            (mod.Item2 == null || PluginManager.IsModVisible(mod.Item2)) &&
+                                            !(category                                       == nameof(Main) &&
+                                              MenuHandler.Instance?.HasDedicatedSearchButton == true         &&
+                                              mod.Item1                                      == typeof(Search)) &&
+                                            !(category == nameof(Main) &&
+                                              mod.Item1 == typeof(FavouriteMods) &&
+                                              GetFavouriteMods().Length == 0))
+                             .ToArray()
+                       : [];
+    }
+
+    public static ValueTuple<Type, hamburburmod>[] GetFavouriteMods() => Categories
+                                                                            .Where(kvp => kvp.Key != nameof(Main) &&
+                                                                                          kvp.Key != FavouriteModsCategory)
+                                                                            .SelectMany(kvp => kvp.Value)
+                                                                            .Where(mod => mod.Item2 != null &&
+                                                                                          PluginManager.IsModVisible(mod.Item2) &&
+                                                                                          mod.Item2.IsFavourite &&
+                                                                                          mod.Item2.CanFavourite)
+                                                                            .GroupBy(mod => mod.Item2)
+                                                                            .Select(group => group.First())
+                                                                            .ToArray();
+
+    public static bool IsMainCategoryVisible(hamburburmod mod) =>
+            mod != null && PluginManager.IsModVisible(mod) &&
+            (mod is not FavouriteMods || GetFavouriteMods().Length > 0);
+
+    public static string GetDisplayName(hamburburmod mod) =>
+            mod?.IsFavourite == true ? $"<size=70%>★</size> {mod.ModName}" : mod?.ModName ?? string.Empty;
 
     public static ValueTuple<Type, hamburburmod>[] GetEnabledMods() => Categories
                                                                       .SelectMany(kvp => kvp.Value)

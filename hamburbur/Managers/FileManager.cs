@@ -47,11 +47,11 @@ public class FileManager : Singleton<FileManager>
         if (!Directory.Exists(RootHamburburFolder))
         {
             firstTimeUsingHamburbur = true;
-            CoroutineManager.Instance.StartCoroutine(LoadingScreenManager.Instance.TutorialScreen());
+            CoroutineManager.Instance.StartCoroutine(LoadingScreenManager.TutorialScreen());
 
             Directory.CreateDirectory(RootHamburburFolder);
         }
-
+        
         SoundsFolder       = Path.Combine(RootHamburburFolder, "Sounds");
         MacrosFolder       = Path.Combine(RootHamburburFolder, "Macros");
         EventLoggerFolder  = Path.Combine(RootHamburburFolder, "Logged Events");
@@ -117,6 +117,8 @@ public class FileManager : Singleton<FileManager>
 
                             modComp.LoadSavedData(modSaveInfo);
                         }
+
+                    ButtonHandler.Instance?.UpdateButtons();
                 }
                 catch
                 {
@@ -140,7 +142,6 @@ public class FileManager : Singleton<FileManager>
 
 #endregion
 
-                hasLoadedSavedData = true;
             }
             catch (Exception e)
             {
@@ -153,6 +154,8 @@ public class FileManager : Singleton<FileManager>
                 UpdatePreferences();
             }
         }
+
+        hasLoadedSavedData = true;
 
         HamburburOrgData.OnDataReloaded += CheckVoteEligibility;
         MacroManager.LoadAllMacros();
@@ -217,6 +220,7 @@ public class FileManager : Singleton<FileManager>
                 ButtonHandler.SavedModInfo[modComp.PreferencesKey] = new ModSaveInfo
                 {
                         Enabled          = modComp.Enabled,
+                        Favourite        = modComp.IsFavourite,
                         IncrementalValue = modComp.IncrementalValue,
                 };
 

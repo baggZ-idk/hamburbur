@@ -317,18 +317,19 @@ public class GUIHandler : Singleton<GUIHandler>
                 if (category.Key == nameof(Main))
                 {
                     GameObject categoryButton = Instantiate(CategoryButtonPrefab, categoryContent);
-                    categoryButton.GetComponentInChildren<TextMeshProUGUI>().text = mod.Item2.ModName;
+                    categoryButton.GetComponentInChildren<TextMeshProUGUI>().text = Buttons.GetDisplayName(mod.Item2);
                     Button categoryUiButton = categoryButton.GetComponent<Button>();
                     categoryUiButton.onClick.AddListener(() => mod.Item2.Toggle(ButtonState.Normal));
                     categoryUiButton.gameObject.GetOrAddComponent<ButtonPressAnimator>();
 
                     mod.Item2.AssociatedGUIButton = categoryButton;
-                    categoryButton.SetActive(PluginManager.IsModVisible(mod.Item2));
+                    categoryButton.SetActive(Buttons.IsMainCategoryVisible(mod.Item2));
                 }
                 else
                 {
                     GameObject modButton = Instantiate(ModButtonPrefab, modContent);
-                    modButton.transform.TakeChild(0).GetComponent<TextMeshProUGUI>().text = mod.Item2.ModName;
+                    modButton.transform.TakeChild(0).GetComponent<TextMeshProUGUI>().text =
+                            Buttons.GetDisplayName(mod.Item2);
                     modButton.transform.TakeChild(1).GetComponent<TextMeshProUGUI>().text =
                             mod.Item2.AssociatedAttribute.Description;
 
@@ -372,8 +373,9 @@ public class GUIHandler : Singleton<GUIHandler>
                     if (modComp?.AssociatedGUIButton == null)
                         continue;
 
-                    modComp.AssociatedGUIButton.GetComponentInChildren<TextMeshProUGUI>().text = modComp.ModName;
-                    modComp.AssociatedGUIButton.SetActive(PluginManager.IsModVisible(modComp));
+                    modComp.AssociatedGUIButton.GetComponentInChildren<TextMeshProUGUI>().text =
+                            Buttons.GetDisplayName(modComp);
+                    modComp.AssociatedGUIButton.SetActive(Buttons.IsMainCategoryVisible(modComp));
                 }
 
                 continue;
@@ -384,13 +386,16 @@ public class GUIHandler : Singleton<GUIHandler>
                 if (modComp?.AssociatedGUIButton == null)
                     continue;
 
-                if (MenuHandler.Instance.Category != "Enabled Mods")
+                bool isEnabledModsCategory = MenuHandler.Instance.Category == "Enabled Mods";
+                bool isFavouriteModsCategory = MenuHandler.Instance.Category == Buttons.FavouriteModsCategory;
+
+                if (!isEnabledModsCategory && !isFavouriteModsCategory)
                 {
                     modComp.AssociatedGUIButton.SetActive(category == MenuHandler.Instance.Category &&
                                                           PluginManager.IsModVisible(modComp));
 
                     modComp.AssociatedGUIButton.transform.TakeChild(0).GetComponent<TextMeshProUGUI>().text =
-                            modComp.ModName;
+                            Buttons.GetDisplayName(modComp);
 
                     modComp.AssociatedGUIButton.transform.TakeChild(1).GetComponent<TextMeshProUGUI>().text =
                             modComp.AssociatedAttribute.Description;
@@ -412,12 +417,15 @@ public class GUIHandler : Singleton<GUIHandler>
                 }
                 else
                 {
-                    bool showEnabledMod = PluginManager.IsModVisible(modComp) && modComp.Enabled &&
-                                          modComp.AssociatedAttribute.ButtonType == ButtonType.Togglable;
+                    bool showEnabledMod = PluginManager.IsModVisible(modComp) &&
+                                          (isEnabledModsCategory
+                                                   ? modComp.Enabled && modComp.AssociatedAttribute.ButtonType ==
+                                                     ButtonType.Togglable
+                                                   : modComp.IsFavourite && modComp.CanFavourite);
 
                     modComp.AssociatedGUIButton.SetActive(showEnabledMod);
                     modComp.AssociatedGUIButton.transform.TakeChild(0).GetComponent<TextMeshProUGUI>().text =
-                            modComp.ModName;
+                            Buttons.GetDisplayName(modComp);
 
                     modComp.AssociatedGUIButton.transform.TakeChild(1).GetComponent<TextMeshProUGUI>().text =
                             modComp.AssociatedAttribute.Description;

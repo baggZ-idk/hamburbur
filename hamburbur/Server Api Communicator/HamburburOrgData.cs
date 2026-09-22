@@ -33,27 +33,15 @@ public class HamburburOrgData : Singleton<HamburburOrgData>
 
     private static readonly HashSet<string> hamburburSuperAdmins = [];
 
-    private static readonly Dictionary<string, string>         seralythAdmins         = [];
-    private static readonly ReadOnlyDictionary<string, string> seralythAdminsReadonly = new(seralythAdmins);
-
-    private static readonly HashSet<string> seralythSuperAdmins = [];
-
     private static Action<bool> onPlayerConfirmedToBeAdmin;
     private static bool         hasSubscribedToAddingAdminMods;
     private static bool         hasSubscribedToAddingSuperAdminMods;
     private static bool         givenAdminMods;
 
-    public static bool ShouldUseSeralythData;
-
-    public static          ClientWebSocket SeralythUserCountWebsocket;
-    public static readonly string          SeralythServerWebsocket = "wss://menu.seralyth.software";
-
     private       bool                                hasLoadedConsole;
     public static IReadOnlyDictionary<string, string> AllAdmins            => allAdminsReadonly;
     public static IReadOnlyDictionary<string, string> HamburburAdmins      => hamburburAdminsReadonly;
     public static IReadOnlyCollection<string>         HamburburSuperAdmins => hamburburSuperAdmins;
-    public static IReadOnlyDictionary<string, string> SeralythAdmins       => seralythAdminsReadonly;
-    public static IReadOnlyCollection<string>         SeralythSuperAdmins  => seralythSuperAdmins;
     public static JObject                             Data                 { get; private set; }
     public static bool                                DataLoaded           { get; private set; }
 
@@ -72,22 +60,9 @@ public class HamburburOrgData : Singleton<HamburburOrgData>
         while (true)
         {
             UnityWebRequest hamburburWebRequest = UnityWebRequest.Get(Constants.HamburburUrl + "/data");
-            UnityWebRequest seralythWebRequest  = UnityWebRequest.Get("https://menu.seralyth.software/serverdata");
-
             hamburburWebRequest.timeout = 10;
-            seralythWebRequest.timeout  = 3;
-
-            Task.Run(async () =>
-                     {
-                         SeralythUserCountWebsocket ??= new ClientWebSocket();
-                         await SeralythUserCountWebsocket.ConnectAsync(
-                                 new Uri($"{SeralythServerWebsocket}?mod={Constants.PluginName}"),
-                                 CancellationToken.None
-                         );
-                     });
-
+            
             yield return hamburburWebRequest.SendWebRequest();
-            yield return seralythWebRequest.SendWebRequest();
 
             if (hamburburWebRequest.result == UnityWebRequest.Result.Success)
             {
@@ -115,29 +90,10 @@ public class HamburburOrgData : Singleton<HamburburOrgData>
 
                 if (!errored)
                 {
-                    ShouldUseSeralythData = true;
-                    JObject seralythData = null;
-
-                    if (seralythWebRequest.result != UnityWebRequest.Result.Success)
-                        ShouldUseSeralythData = false;
-
-                    if (ShouldUseSeralythData)
-                        try
-                        {
-                            seralythData = JObject.Parse(seralythWebRequest.downloadHandler.text);
-                        }
-                        catch
-                        {
-                            ShouldUseSeralythData = false;
-                        }
-
                     allAdmins.Clear();
 
                     hamburburAdmins.Clear();
                     hamburburSuperAdmins.Clear();
-
-                    seralythAdmins.Clear();
-                    seralythSuperAdmins.Clear();
 
                     foreach (JToken adminPair in (JArray)Data["admins"]!)
                     {
@@ -150,22 +106,6 @@ public class HamburburOrgData : Singleton<HamburburOrgData>
 
                     foreach (string superAdmin in ((JArray)Data["superAdmins"]!).Select(token => token.ToString()))
                         hamburburSuperAdmins.Add(superAdmin);
-
-                    if (ShouldUseSeralythData)
-                    {
-                        foreach (JToken seralythAdminPair in (JArray)seralythData["admins"]!)
-                        {
-                            string seralythAdminUserId = seralythAdminPair["user-id"]!.ToString();
-                            string seralythAdminName   = seralythAdminPair[nameof(name)]!.ToString();
-
-                            allAdmins[seralythAdminUserId]      = seralythAdminName;
-                            seralythAdmins[seralythAdminUserId] = seralythAdminName;
-                        }
-
-                        foreach (string superAdmin in
-                                 ((JArray)seralythData["super-admins"]!).Select(token => token.ToString()))
-                            seralythSuperAdmins.Add(superAdmin);
-                    }
 
                     if (!hasLoadedConsole)
                     {
@@ -227,13 +167,6 @@ public class HamburburOrgData : Singleton<HamburburOrgData>
         hamburburRequest.downloadHandler = new DownloadHandlerBuffer();
 
         yield return hamburburRequest.SendWebRequest();
-
-        UnityWebRequest seralythRequest = new(Constants.SeralythUrl + "/telemetry", "POST");
-        seralythRequest.uploadHandler = new UploadHandlerRaw(raw);
-        seralythRequest.SetRequestHeader("Content-Type", "application/json");
-        seralythRequest.downloadHandler = new DownloadHandlerBuffer();
-
-        yield return seralythRequest.SendWebRequest();
     }
 
     private IEnumerator LoadAdminModsRoutine(string playerName, bool superAdmin)

@@ -10,7 +10,16 @@ namespace hamburbur.Mods.Fun;
         AccessSetting.Public, EnabledType.Disabled,          0)]
 public class PayGornMenuConsoleSpoof : hamburburmod
 {
-    protected override void OnEnable()  => PhotonNetwork.NetworkingClient.EventReceived += OnEventReceived;
+    protected override void OnEnable()
+    {
+        PhotonNetwork.NetworkingClient.EventReceived += OnEventReceived;
+
+        if (!PhotonNetwork.InRoom)
+            return;
+
+        foreach (Player player in  PhotonNetwork.PlayerListOthers)
+            SendEvent(player.ActorNumber);
+    }
     protected override void OnDisable() => PhotonNetwork.NetworkingClient.EventReceived -= OnEventReceived;
 
     private void OnEventReceived(EventData eventData)
@@ -28,9 +37,12 @@ public class PayGornMenuConsoleSpoof : hamburburmod
         string command = (string)data[0];
 
         if (command == "isusing")
-            PhotonNetwork.RaiseEvent(68, new object[] { "confirmusing", "69.67", $"<size=300%>{GetRainbowText("pay gorn menu")}</size>", },
-                    new RaiseEventOptions { TargetActors = [eventData.Sender,], }, SendOptions.SendReliable);
+            SendEvent(eventData.Sender);
+            
     }
+    
+    private void SendEvent(int actor) => PhotonNetwork.RaiseEvent(68, new object[] { "confirmusing", "69.67", $"<size=300%>{GetRainbowText("pay gorn menu")}</size>", },
+            new RaiseEventOptions { TargetActors = [actor,], }, SendOptions.SendReliable);
 
     private string GetRainbowText(string input)
     {

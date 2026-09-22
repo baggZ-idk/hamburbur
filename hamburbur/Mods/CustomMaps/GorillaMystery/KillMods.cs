@@ -91,7 +91,7 @@ public class MysteryKillAll : hamburburmod
     protected override void Pressed()
     {
         foreach (VRRig rig in NetworkSystem.Instance.Rigs().ToArray())
-            MysteryTagNetwork.Kill(rig);
+            MysteryTagNetwork.Kill(rig, true);
     }
 }
 
@@ -104,7 +104,7 @@ public class KillSheriff : hamburburmod
     protected override void Pressed()
     {
         if (MysteryTagState.SheriffActorNumber is { } actorNumber)
-            MysteryTagNetwork.Kill(actorNumber.Rig());
+            MysteryTagNetwork.Kill(actorNumber.Rig(), true);
     }
 }
 
@@ -117,7 +117,7 @@ public class KillMurderer : hamburburmod
     protected override void Pressed()
     {
         if (MysteryTagState.MurdererActorNumber is { } actorNumber)
-            MysteryTagNetwork.Kill(actorNumber.Rig());
+            MysteryTagNetwork.Kill(actorNumber.Rig(), true);
     }
 }
 
@@ -135,7 +135,7 @@ public class KillAllInnocents : hamburburmod
                 MysteryTagState.GetRole(rig.Creator.ActorNumber) != MysteryTagRole.Innocent)
                 continue;
 
-            MysteryTagNetwork.Kill(rig);
+            MysteryTagNetwork.Kill(rig, true);
         }
     }
 }

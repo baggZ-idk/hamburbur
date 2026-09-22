@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using GorillaLocomotion;
 using hamburbur.Components;
 using hamburbur.Mods.Settings;
@@ -45,16 +46,13 @@ public class RigUtils : Singleton<RigUtils>
             }
         }
 
-        bool showControllerBalls = !IsRigEnabled;
+        bool showControllerBalls = !IsRigEnabled && GhostRig.IsEnabled;
 
         rBall.SetActive(showControllerBalls);
         lBall.SetActive(showControllerBalls);
 
-        foreach (VRRig rig in LoadedRigs)
+        foreach (VRRig rig in LoadedRigs.Where(rig => rig))
         {
-            if (rig == null)
-                continue;
-
             if (!RigPositions.TryGetValue(rig, out Vector3 position))
                 position = rig.transform.position;
 

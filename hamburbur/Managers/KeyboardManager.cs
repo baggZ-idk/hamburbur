@@ -124,7 +124,7 @@ public class KeyboardManager : Singleton<KeyboardManager>
         NonDominantButtonPresser.SetActive(false);
 
         NonDominantButtonPresser.transform.SetParent(Tools.Utils.RealLeftController);
-        NonDominantButtonPresser.transform.localPosition = new Vector3(0f, -0.01f, 0.13f);
+        ChangePointerPosition.ApplyCurrentPosition(NonDominantButtonPresser, true);
         NonDominantButtonPresser.transform.localScale    = Vector3.one * 0.01f;
 
         if (NonDominantButtonPresser.TryGetComponent(out MeshRenderer meshRenderer))
@@ -396,9 +396,12 @@ public class KeyboardManager : Singleton<KeyboardManager>
         NonDominantButtonPresser.SetActive(true);
         NonDominantButtonPresser.transform.SetParent(RightHanded.IsEnabled
                                                              ? Tools.Utils.RealRightController
-                                                             : Tools.Utils.RealLeftController);
+                                                             : Tools.Utils.RealLeftController,
+                                                     false);
 
-        NonDominantButtonPresser.transform.localPosition = new Vector3(0f, -0.01f, 0.13f);
+        bool isLeftHand = !RightHanded.IsEnabled;
+        NonDominantButtonPresser.GetComponent<ButtonPresser>().isLeft = isLeftHand;
+        ChangePointerPosition.ApplyCurrentPosition(NonDominantButtonPresser, isLeftHand);
 
         Keyboard.SetActive(true);
     }

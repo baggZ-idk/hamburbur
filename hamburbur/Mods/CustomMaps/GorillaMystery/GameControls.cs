@@ -26,11 +26,8 @@ public class MysteryRightHand : hamburburmod
 {
     protected override void Pressed()
     {
-        if (PhotonNetwork.LocalPlayer != null)
-            MysteryTagNetwork.Send(
-                    MysteryTagEvents.HandChanged,
-                    (double)PhotonNetwork.LocalPlayer.ActorNumber,
-                    0d);
+        if (MysteryTagNetwork.LocalPlayerId != 0)
+            MysteryTagNetwork.SetHand(MysteryTagNetwork.LocalPlayerId, false);
     }
 }
 
@@ -40,15 +37,12 @@ public class MysteryLeftHand : hamburburmod
 {
     protected override void Pressed()
     {
-        if (PhotonNetwork.LocalPlayer != null)
-            MysteryTagNetwork.Send(
-                    MysteryTagEvents.HandChanged,
-                    (double)PhotonNetwork.LocalPlayer.ActorNumber,
-                    1d);
+        if (MysteryTagNetwork.LocalPlayerId != 0)
+            MysteryTagNetwork.SetHand(MysteryTagNetwork.LocalPlayerId, true);
     }
 }
 
-[hamburburmod(            "Become Sheriff",     "Claims the sheriff role when the map currently has no sheriff",
+[hamburburmod(            "Become Sheriff",     "Drops the existing pistol, then claims the sheriff role for you",
         ButtonType.Fixed, AccessSetting.Public, EnabledType.Disabled, 0)]
 public class BecomeMysterySheriff : hamburburmod
 {
@@ -56,10 +50,11 @@ public class BecomeMysterySheriff : hamburburmod
 
     protected override void Pressed()
     {
-        if (PhotonNetwork.LocalPlayer != null)
-            MysteryTagNetwork.Send(
-                    MysteryTagEvents.ChooseSheriff,
-                    (double)PhotonNetwork.LocalPlayer.ActorNumber);
+        if (MysteryTagNetwork.LocalPlayerId == 0 || GorillaTagger.Instance?.bodyCollider == null)
+            return;
+
+        MysteryTagNetwork.DropGun(GorillaTagger.Instance.bodyCollider.transform.position);
+        MysteryTagNetwork.Send(MysteryTagEvents.ChooseSheriff, (double)MysteryTagNetwork.LocalPlayerId);
     }
 }
 
@@ -76,7 +71,7 @@ public class BecomeMysteryMurderer : hamburburmod
 
         MysteryTagNetwork.Send(
                 MysteryTagEvents.ChooseMurder,
-                (double)PhotonNetwork.LocalPlayer.ActorNumber);
+                (double)MysteryTagNetwork.LocalPlayerId);
     }
 }
 
@@ -138,7 +133,7 @@ public class ForceInnocentsWin : hamburburmod
         ButtonType.Togglable, AccessSetting.Public,   EnabledType.Disabled, 0)]
 public class SpamMysteryRounds : hamburburmod
 {
-    private const float EventDelay = 0.3f;
+    private const float EventDelay = 0.5f;
     private       float nextEventTime;
     private       int   nextMap    = 1;
     private       int   nextWinner = 1;

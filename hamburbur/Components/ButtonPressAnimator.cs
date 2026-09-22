@@ -46,6 +46,15 @@ public class ButtonPressAnimator : MonoBehaviour, IPointerDownHandler
         StartAnimation(HoldGrowDuration, HoldShrinkDuration);
     }
 
+    public void PlayIndicator()
+    {
+        if (animationCoroutine != null)
+            StopCoroutine(animationCoroutine);
+
+        transform.localScale = baseScale;
+        animationCoroutine   = StartCoroutine(AnimateIndicator());
+    }
+
     private void StartAnimation(float growDuration, float shrinkDuration)
     {
         if (animationCoroutine != null)
@@ -86,6 +95,15 @@ public class ButtonPressAnimator : MonoBehaviour, IPointerDownHandler
 
                 break;
         }
+
+        transform.localScale = baseScale;
+        animationCoroutine   = null;
+    }
+
+    private IEnumerator AnimateIndicator()
+    {
+        yield return ScaleTo(baseScale * 1.08f, GrowDuration);
+        yield return ScaleTo(baseScale, ShrinkDuration);
 
         transform.localScale = baseScale;
         animationCoroutine   = null;

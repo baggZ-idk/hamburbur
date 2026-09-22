@@ -11,6 +11,8 @@ public static class MysteryTagNetwork
 {
     private const float KillVelocity = 50f;
 
+    public static int LocalPlayerId => PhotonNetwork.LocalPlayer?.ActorNumber ?? 0;
+
     public static void Send(string eventName, params object[] data)
     {
         if (!PhotonNetwork.InRoom)
@@ -48,6 +50,22 @@ public static class MysteryTagNetwork
                 (double)velocity.z);
     }
 
+    public static void KillSelf()
+    {
+        if (LocalPlayerId == 0 || GorillaTagger.Instance?.bodyCollider == null)
+            return;
+
+        Vector3 position = GorillaTagger.Instance.bodyCollider.transform.position;
+        Vector3 velocity = GetKillVelocity(position);
+        double skeleton = SpawnKillSkeletons.IsEnabled ? 0d : 1d;
+
+        Send(MysteryTagEvents.PlayerDeath,
+                (double)LocalPlayerId,
+                (double)position.x, (double)position.y, (double)position.z,
+                skeleton,
+                (double)velocity.x, (double)velocity.y, (double)velocity.z);
+    }
+
     public static void SheriffKill(VRRig rig, bool includeAlreadyDead = false)
     {
         if (rig?.Creator == null || !includeAlreadyDead && !MysteryTagState.IsAlive(rig.Creator.ActorNumber))
@@ -64,6 +82,14 @@ public static class MysteryTagNetwork
                 skeleton,
                 velocity);
     }
+
+    public static void DropGun(Vector3 position) =>
+            Send(MysteryTagEvents.DropGun, (double)position.x, (double)position.y, (double)position.z);
+
+    public static void PlaySheriffShot(Vector3 position) => Send(MysteryTagEvents.SheriffShot, position);
+
+    public static void SetHand(int playerId, bool leftHand) =>
+            Send(MysteryTagEvents.HandChanged, (double)playerId, leftHand ? 1d : 0d);
 
     private static Vector3 GetKillVelocity(Vector3 position)
     {

@@ -36,6 +36,7 @@ public class MenuSoundsHandler : Singleton<MenuSoundsHandler>
     private AudioClip Watch         { get; set; }
     private AudioClip Creamy        { get; set; }
     private AudioClip Minimal       { get; set; }
+    private AudioClip Boop          { get; set; }
 
     public int MenuSoundSetCount => menuSoundSets.Count;
 
@@ -69,6 +70,10 @@ public class MenuSoundsHandler : Singleton<MenuSoundsHandler>
                 "UI",
                 bundle.LoadAsset<AudioClip>("UiEnter"));
 
+        RegisterMenuSoundSet(
+                "MacOS",
+                bundle.LoadAsset<AudioClip>("Breeze"));
+
         RegisterMenuSoundSet("Silent");
 
         NotificationSound        = bundle.LoadAsset<AudioClip>("notification");
@@ -94,6 +99,7 @@ public class MenuSoundsHandler : Singleton<MenuSoundsHandler>
         Watch         = bundle.LoadAsset<AudioClip>("watch");
         Creamy        = bundle.LoadAsset<AudioClip>("creamy");
         Minimal       = bundle.LoadAsset<AudioClip>("minimalPress");
+        Boop          = bundle.LoadAsset<AudioClip>("Boop");
     }
 
     public void RegisterMenuSoundSet(string name, AudioClip openSound = null, AudioClip closeSound = null)
@@ -161,8 +167,6 @@ public class MenuSoundsHandler : Singleton<MenuSoundsHandler>
                                            "Krisp Wood"     => 114,
                                            "Rustic Click"   => 271,
                                            "Drip"           => 311,
-                                           "Jman Okay"      => 336,
-                                           "Jman Ahhhh"     => 337,
                                            var _            => 67,
                                    };
 
@@ -183,6 +187,7 @@ public class MenuSoundsHandler : Singleton<MenuSoundsHandler>
                     nameof(Watch)       => Watch,
                     nameof(Creamy)      => Creamy,
                     nameof(Minimal)     => Minimal,
+                    nameof(Boop)        => Boop,
                     var _               => throw new ArgumentOutOfRangeException(),
             };
 

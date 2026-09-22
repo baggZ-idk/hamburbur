@@ -24,7 +24,10 @@ public class hamburburmod
     private       ModSaveInfo pendingSavedData;
     public static int         EnabledStateRevision { get; private set; }
 
-    public bool Enabled { get; private set; }
+    public bool Enabled     { get; private set; }
+    public bool IsFavourite { get; private set; }
+
+    public bool CanFavourite => AssociatedAttribute?.ButtonType is ButtonType.Togglable or ButtonType.Fixed;
 
     public string ConfigKey { get; set; }
 
@@ -88,12 +91,23 @@ public class hamburburmod
         }
 
         IncrementalValue = savedModInfo.IncrementalValue;
+        IsFavourite      = CanFavourite && savedModInfo.Favourite;
         OnIncrementalStateLoaded();
 
         if (!CanLoadSavedEnabledState())
             return;
 
         SetEnabled(savedModInfo.Enabled, false, false);
+    }
+
+    public bool ToggleFavourite()
+    {
+        if (!CanFavourite)
+            return false;
+
+        IsFavourite = !IsFavourite;
+
+        return true;
     }
 
     public void Toggle(

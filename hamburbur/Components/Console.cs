@@ -36,12 +36,9 @@ public class Console : MonoBehaviour
     private const string HamburburSuperAdminIcon = "https://files.hamburbur.org/HamburburSuperDuperAdmin.png";
     private const string HamburburAdminIcon      = "https://files.hamburbur.org/HamburburAdmin.png";
 
-    private const string SeralythSuperAdminIcon = $"{SeralythServerDataURL}/icon.png";
-    private const string SeralythAdminIcon      = "https://files.hamburbur.org/SeralythAdmin.png";
-
     private const byte ConsoleByte = 68;
 
-    private const string SeralythServerDataURL = "https://raw.githubusercontent.com/Seralyth/Console/refs/heads/master/ServerData";
+    private const string AssetsURL = "https://raw.githubusercontent.com/hamburbur-org/Public-Assets/refs/heads/main/";
 
     public const string BlockedKey = "ConsoleBlocked";
 
@@ -53,7 +50,6 @@ public class Console : MonoBehaviour
 
     private static readonly Dictionary<string, Color> MenuColors = new()
     {
-            { "seralyth", new Color32(118, 6,   252, 128) },
             { "stupid", new Color32(255,   128, 0,   255) },
             { "symex", new Color32(138,    43,  226, 255) },
             { "colossal", new Color32(204, 0,   255, 255) },
@@ -99,9 +95,6 @@ public class Console : MonoBehaviour
     private VRRig adminRigTarget;
     private float adminScale = 1f;
 
-    private Material  adminSeralythMaterial;
-    private Texture2D adminSeralythTexture;
-
     private Coroutine laserCoroutine;
 
     private Coroutine shakeCoroutine;
@@ -110,9 +103,6 @@ public class Console : MonoBehaviour
 
     private Material  superAdminHamburburMaterial;
     private Texture2D superAdminHamburburTexture;
-
-    private Material  superAdminSeralythMaterial;
-    private Texture2D superAdminSeralythTexture;
 
     private void Awake()
     {
@@ -165,8 +155,7 @@ public class Console : MonoBehaviour
 
                 bool localIsSuperAdmin =
                         HamburburOrgData.AllAdmins.TryGetValue(PhotonNetwork.LocalPlayer.UserId, out string localAdminName) &&
-                        (HamburburOrgData.HamburburSuperAdmins.Contains(localAdminName) ||
-                         HamburburOrgData.SeralythSuperAdmins.Contains(localAdminName));
+                        HamburburOrgData.HamburburSuperAdmins.Contains(localAdminName);
 
                 foreach (Player player in PhotonNetwork.PlayerListOthers)
                 {
@@ -222,17 +211,7 @@ public class Console : MonoBehaviour
                         textRect.anchoredPosition = Vector2.zero;
                         textRect.sizeDelta        = new Vector2(200f, 100f);
 
-                        if (HamburburOrgData.HamburburSuperAdmins.Contains(adminName))
-                            adminConeRenderer.material = superAdminHamburburMaterial;
-                        else if (HamburburOrgData.SeralythAdmins.TryGetValue(
-                                         player.UserId,
-                                         out string potentialSeralythSuperAdminName) &&
-                                 HamburburOrgData.SeralythSuperAdmins.Contains(potentialSeralythSuperAdminName))
-                            adminConeRenderer.material = superAdminSeralythMaterial;
-                        else if (HamburburOrgData.SeralythAdmins.ContainsKey(player.UserId))
-                            adminConeRenderer.material = adminSeralythMaterial;
-                        else
-                            adminConeRenderer.material = adminHamburburMaterial;
+                        adminConeRenderer.material = HamburburOrgData.HamburburSuperAdmins.Contains(adminName) ? superAdminHamburburMaterial : adminHamburburMaterial;
 
                         conePool.Add(playerRig, new AdminIndicator
                         {
@@ -511,21 +490,8 @@ public class Console : MonoBehaviour
                 texture => adminHamburburTexture = texture
         );
 
-        yield return DownloadAdminTexture(
-                SeralythAdminIcon,
-                texture => adminSeralythTexture = texture
-        );
-
-        yield return DownloadAdminTexture(
-                SeralythSuperAdminIcon,
-                texture => superAdminSeralythTexture = texture
-        );
-
         adminHamburburMaterial = CreateAdminMaterial(adminHamburburTexture);
-
         superAdminHamburburMaterial = CreateAdminMaterial(adminHamburburMaterial, superAdminHamburburTexture);
-        adminSeralythMaterial       = CreateAdminMaterial(adminHamburburMaterial, adminSeralythTexture);
-        superAdminSeralythMaterial  = CreateAdminMaterial(adminHamburburMaterial, superAdminSeralythTexture);
     }
 
     private IEnumerator DownloadAdminTexture(string url, Action<Texture2D> onComplete)
@@ -582,7 +548,7 @@ public class Console : MonoBehaviour
 
     private IEnumerator PreloadAssets()
     {
-        using UnityWebRequest request = UnityWebRequest.Get($"{SeralythServerDataURL}/PreloadedAssets.txt");
+        using UnityWebRequest request = UnityWebRequest.Get($"{AssetsURL}/PreloadedAssets.txt");
 
         yield return request.SendWebRequest();
 
@@ -1615,7 +1581,7 @@ public class Console : MonoBehaviour
         if (File.Exists(fileName))
             File.Delete(fileName);
 
-        string url = $"{SeralythServerDataURL}/{assetBundle}";
+        string url = $"{AssetsURL}/{assetBundle}";
 
         if (assetBundle.Contains("/"))
         {
