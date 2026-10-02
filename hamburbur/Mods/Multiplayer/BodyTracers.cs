@@ -74,7 +74,7 @@ public class BodyTracers : hamburburmod
         line.positionCount = 2;
         line.useWorldSpace = true;
 
-        line.material.shader = Shader.Find("GUI/Text Shader");
+        line.material.shader = Shaders.TextShader;
         line.material.color  = lineColor;
 
         tracers.Add(rig, line);

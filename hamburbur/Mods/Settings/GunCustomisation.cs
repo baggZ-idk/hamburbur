@@ -119,6 +119,7 @@ public class ChangeGunColour : hamburburmod
             "Blue",
             "Purple",
             "Pink",
+            "Black",
     ];
 
     private static ChangeGunColour instance;

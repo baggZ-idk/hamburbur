@@ -80,7 +80,7 @@ public class CosmeticEsp : hamburburmod
                 dict[renderer] = copies;
                 foreach (Material mat in renderer.materials)
                 {
-                    mat.shader = Shader.Find("GUI/Text Shader");
+                    mat.shader = Shaders.TextShader;
                     mat.color  = Plugin.Instance.MainColour;
                 }
 

@@ -1,6 +1,7 @@
 using GorillaTag.Rendering;
 using hamburbur.Managers;
 using hamburbur.Mod_Backend;
+using hamburbur.Tools;
 using UnityEngine;
 using UnityEngine.Rendering;
 using Object = UnityEngine.Object;
@@ -240,7 +241,7 @@ public class AudioOrbsVisualizer : hamburburmod
             shader = Shader.Find(fallbackShaderName);
 
         if (shader == null || shader.name == "Hidden/InternalErrorShader")
-            shader = Shader.Find("Sprites/Default");
+            shader = Shaders.SpritesDefaultShader;
 
         return new Material(shader);
     }

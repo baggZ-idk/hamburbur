@@ -79,8 +79,8 @@ public class WorldScaleBypass : hamburburmod
         leftHandCube.GetComponent<Renderer>().material.color  = Color.green;
         rightHandCube.GetComponent<Renderer>().material.color = Color.green;
 
-        leftHandCube.GetComponent<Renderer>().material.shader  = Shader.Find("GUI/Text Shader");
-        rightHandCube.GetComponent<Renderer>().material.shader = Shader.Find("GUI/Text Shader");
+        leftHandCube.GetComponent<Renderer>().material.shader  = Shaders.TextShader;
+        rightHandCube.GetComponent<Renderer>().material.shader = Shaders.TextShader;
 
         leftHandCube.GetComponent<Collider>().Obliterate();
         rightHandCube.GetComponent<Collider>().Obliterate();

@@ -14,6 +14,8 @@ using hamburbur.Mods.CustomMaps.ChimpCombat;
 using hamburbur.Mods.CustomMaps.CrownTag;
 using hamburbur.Mods.CustomMaps.GorillaMystery;
 using hamburbur.Mods.CustomMaps.MecchaGorilla;
+using hamburbur.Mods.CustomMaps.SlapBattles;
+using hamburbur.Mods.CustomMaps.XenoGorilla;
 using hamburbur.Mods.Fun;
 using hamburbur.Mods.Macros;
 using hamburbur.Mods.MapLoader;
@@ -36,7 +38,8 @@ namespace hamburbur.GUI;
 
 public static class Buttons
 {
-    public const string FavouriteModsCategory = "Favourite Mods";
+    public const  string FavouriteModsCategory = "Favourite Mods";
+    private const string FavouriteStar         = "*";
 
     public static readonly Dictionary<string, (Type, hamburburmod)[]> Categories = new()
     {
@@ -287,7 +290,7 @@ public static class Buttons
 
             [nameof(Visual)] =
             [
-                    //(typeof(GhostVision), null),
+                    (typeof(GhostVision), null),
                     (typeof(ResetTime), null),
                     (typeof(TimeSetter), null),
                     (typeof(NoRain), null),
@@ -444,6 +447,8 @@ public static class Buttons
                     (typeof(CT), null),
                     (typeof(GM), null),
                     (typeof(MGorilla), null),
+                    (typeof(SB), null),
+                    (typeof(XG), null),
             ],
 
             ["Chimp Combat"] =
@@ -563,6 +568,141 @@ public static class Buttons
                     (typeof(MecchaTeleportForest), null),
                     (typeof(MecchaTeleportCity), null),
                     (typeof(MecchaTeleportCubes), null),
+            ],
+
+            ["Xeno Gorilla"] =
+            [
+                    (typeof(XenoVoteClassicGhosts), null),
+                    (typeof(XenoVoteUndiscoveredGhosts), null),
+                    (typeof(XenoSummonDaisy09), null),
+                    (typeof(XenoSummonBlueLucy), null),
+                    (typeof(XenoSummonLucyfer), null),
+                    (typeof(XenoSummonErrorLucy), null),
+                    (typeof(XenoSummonWhiteLucy), null),
+                    (typeof(XenoSummonTiptoe), null),
+                    (typeof(XenoSummonEcho), null),
+                    (typeof(XenoSummonMirrorMan), null),
+                    (typeof(XenoSummonRun), null),
+                    (typeof(XenoSummonAngel), null),
+                    (typeof(XenoSummonDimwi), null),
+                    (typeof(XenoSummonClone), null),
+                    (typeof(XenoSummonBoiled), null),
+                    (typeof(XenoSummonBlackLucy), null),
+                    (typeof(XenoSummonMorty), null),
+                    (typeof(XenoSummonFlowery), null),
+                    (typeof(XenoBlueLucySummonGun), null),
+                    (typeof(XenoTiptoeSummonGun), null),
+                    (typeof(XenoMirrorManSummonGun), null),
+                    (typeof(XenoBoiledSummonGun), null),
+                    (typeof(XenoWarpDimwiGun), null),
+                    (typeof(XenoWarpMortyGun), null),
+                    (typeof(XenoWarpAngelGun), null),
+                    (typeof(XenoWarpFloweryGun), null),
+                    (typeof(XenoDaisy09ChaseGun), null),
+                    (typeof(XenoKnockDoor), null),
+                    (typeof(XenoPopBalloon), null),
+                    (typeof(XenoSpawnBalloon), null),
+                    (typeof(XenoClearBalloon), null),
+                    (typeof(XenoProvokeDaisy09), null),
+                    (typeof(XenoTriggerMirrorManGrab), null),
+                    (typeof(XenoPlayBanSound), null),
+                    (typeof(XenoSpawnCorpse), null),
+                    (typeof(XenoCorpseEffectGun), null),
+                    (typeof(XenoClearHorrorOverlays), null),
+                    (typeof(XenoMuteJumpscareSounds), null),
+                    (typeof(XenoResetLighting), null),
+                    (typeof(XenoVisitBlueLucyTombstone), null),
+                    (typeof(XenoVisitLucyferSite), null),
+                    (typeof(XenoVisitErrorLucyStand), null),
+                    (typeof(XenoVisitWhiteLucyGrave), null),
+                    (typeof(XenoVisitTiptoeSpawn), null),
+                    (typeof(XenoVisitEchoObelisk), null),
+                    (typeof(XenoVisitCityMirror), null),
+                    (typeof(XenoVisitAngelStand), null),
+                    (typeof(XenoVisitDoorKnock), null),
+                    (typeof(XenoVisitIntro), null),
+            ],
+
+            ["Slap Battles"] =
+            [
+                    (typeof(SlapBattlesLocalAdmin), null),
+                    (typeof(SlapBattlesVisitAdminPanel), null),
+                    (typeof(SlapBattlesTradeHub), null),
+                    (typeof(SlapBattlesUnlockAllSlaps), null),
+                    (typeof(SlapBattlesUnlockAdminSlap), null),
+                    (typeof(SlapBattlesUnlockBoosterSlap), null),
+                    (typeof(SlapBattlesSetSlaps), null),
+                    (typeof(SlapBattlesAddSlaps), null),
+                    (typeof(SlapBattlesUnlockNamedSlap), null),
+                    (typeof(SlapBattlesEquipNamedSlap), null),
+                    (typeof(SlapBattlesRigRangeAssist), null),
+                    (typeof(SlapBattlesNearbySourceRelay), null),
+                    (typeof(SlapBattlesWaterFlightMask), null),
+                    (typeof(SlapBattlesAntiFling), null),
+                    (typeof(SlapBattlesDistantEffect), null),
+                    (typeof(SlapBattlesDistantEffectAll), null),
+                    (typeof(SlapBattlesFlingGun), null),
+                    (typeof(SlapBattlesPullGun), null),
+                    (typeof(SlapBattlesSkyGun), null),
+                    (typeof(SlapBattlesMoveGun), null),
+                    (typeof(SlapBattlesFlingAll), null),
+                    (typeof(SlapBattlesPullAll), null),
+                    (typeof(SlapBattlesSkyAll), null),
+                    (typeof(SlapBattlesTrapAll), null),
+                    (typeof(SlapBattlesShieldAll), null),
+                    (typeof(SlapBattlesGlitchAll), null),
+                    (typeof(SlapBattlesTornadoGun), null),
+                    (typeof(SlapBattlesNextProp), null),
+                    (typeof(SlapBattlesSpawnGun), null),
+                    (typeof(SlapBattlesSetText), null),
+                    (typeof(SlapBattlesSpellGun), null),
+                    (typeof(SlapBattlesPumpkinGun), null),
+                    (typeof(SlapBattlesGreenBallGun), null),
+                    (typeof(SlapBattlesPumpkinRain), null),
+                    (typeof(SlapBattlesGreenBallRain), null),
+                    (typeof(SlapBattlesPumpkinCrossfire), null),
+                    (typeof(SlapBattlesGreenBallCrossfire), null),
+                    (typeof(SlapBattlesBossBallGun), null),
+                    (typeof(SlapBattlesBusConvoy), null),
+                    (typeof(SlapBattlesBoosterWallGun), null),
+                    (typeof(SlapBattlesBoosterWallBurst), null),
+                    (typeof(SlapBattlesBusBurst), null),
+                    (typeof(SlapBattlesWallRing), null),
+                    (typeof(SlapBattlesWallAntiReport), null),
+                    (typeof(SlapBattlesBlackholeGun), null),
+                    (typeof(SlapBattlesBeeGun), null),
+                    (typeof(SlapBattlesBeeStorm), null),
+                    (typeof(SlapBattlesTrapGun), null),
+                    (typeof(SlapBattlesSlowGun), null),
+                    (typeof(SlapBattlesEmpGun), null),
+                    (typeof(SlapBattlesGlitchGun), null),
+                    (typeof(SlapBattlesRedactedGun), null),
+                    (typeof(SlapBattlesShieldGun), null),
+                    (typeof(SlapBattlesBombGun), null),
+                    (typeof(SlapBattlesEmpPulse), null),
+                    (typeof(SlapBattlesRockGun), null),
+                    (typeof(SlapBattlesMegaRockGun), null),
+                    (typeof(SlapBattlesUnrockGun), null),
+                    (typeof(SlapBattlesRockAll), null),
+                    (typeof(SlapBattlesUnrockAll), null),
+                    (typeof(SlapBattlesStopwatchGun), null),
+                    (typeof(SlapBattlesStopwatchAll), null),
+                    (typeof(SlapBattlesErrorGun), null),
+                    (typeof(SlapBattlesBoomerangGun), null),
+                    (typeof(SlapBattlesMultiColorGun), null),
+                    (typeof(SlapBattlesSlapToGive), null),
+                    (typeof(SlapBattlesGiveSlapGun), null),
+                    (typeof(SlapBattlesGiveSlapAll), null),
+                    (typeof(SlapBattlesSlapAppearance), null),
+                    (typeof(SlapBattlesKillCreditGun), null),
+                    (typeof(SlapBattlesKillCreditAll), null),
+                    (typeof(SlapBattlesNukeGun), null),
+                    (typeof(SlapBattlesMoaiGun), null),
+                    (typeof(SlapBattlesOrbGun), null),
+                    (typeof(SlapBattlesBigOrbGun), null),
+                    (typeof(SlapBattlesNukeCrossfire), null),
+                    (typeof(SlapBattlesStartTournament), null),
+                    (typeof(SlapBattlesStartBoss), null),
             ],
 
             ["Player Commands"] =
@@ -696,7 +836,9 @@ public static class Buttons
             (mod is not FavouriteMods || GetFavouriteMods().Length > 0);
 
     public static string GetDisplayName(hamburburmod mod) =>
-            mod?.IsFavourite == true ? $"<size=70%>★</size> {mod.ModName}" : mod?.ModName ?? string.Empty;
+            mod?.IsFavourite == true
+                    ? $"{FavouriteStar} {mod.ModName}"
+                    : mod?.ModName ?? string.Empty;
 
     public static ValueTuple<Type, hamburburmod>[] GetEnabledMods() => Categories
                                                                       .SelectMany(kvp => kvp.Value)

@@ -62,6 +62,7 @@ public enum GunColourPreset
     Blue,
     Purple,
     Pink,
+    Black,
 }
 
 public class GunLib
@@ -344,6 +345,11 @@ public class GunLib
 
             case GunColourPreset.Pink:
                 startColour = endColour = new Color(1f, 0.15f, 0.65f);
+
+                break;
+            
+            case GunColourPreset.Black:
+                startColour = endColour = Color.black;
 
                 break;
 

@@ -289,7 +289,7 @@ public class WebShooter : hamburburmod
         line.endWidth          = 0.006f;
         line.startColor        = new Color(0.96f, 0.98f, 1f, 0.98f);
         line.endColor          = new Color(0.88f, 0.93f, 1f, 0.92f);
-        line.material          = new Material(Shader.Find("Sprites/Default"));
+        line.material          = new Material(Shaders.SpritesDefaultShader);
         line.enabled           = false;
 
         state.WebObject = webObject;
@@ -308,7 +308,7 @@ public class WebShooter : hamburburmod
         pendingLine.endWidth       = 0.01f;
         pendingLine.startColor     = line.startColor;
         pendingLine.endColor       = line.endColor;
-        pendingLine.material       = new Material(Shader.Find("Sprites/Default"));
+        pendingLine.material       = new Material(Shaders.SpritesDefaultShader);
         pendingLine.enabled        = false;
 
         state.PendingWebObject = pendingObject;
@@ -607,7 +607,7 @@ public class WebShooter : hamburburmod
         line.endWidth       = 0.014f;
         line.startColor     = new Color(0.96f, 0.98f, 1f, 0.98f);
         line.endColor       = new Color(0.88f, 0.93f, 1f, 0.92f);
-        line.material       = new Material(Shader.Find("Sprites/Default"));
+        line.material       = new Material(Shaders.SpritesDefaultShader);
 
         WebTether tether = new()
         {

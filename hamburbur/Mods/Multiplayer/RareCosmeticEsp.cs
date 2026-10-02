@@ -49,7 +49,7 @@ public class RareCosmeticEsp : hamburburmod
             if (!cosmeticObject.TryGetComponent(out MeshRenderer meshRenderer))
                 continue;
 
-            meshRenderer.material.shader = Shader.Find("GUI/Text Shader");
+            meshRenderer.material.shader = Shaders.TextShader;
             meshRenderer.material.color  = Plugin.Instance.MainColour;
         }
     }
@@ -66,8 +66,7 @@ public class RareCosmeticEsp : hamburburmod
             if (!cosmeticObject.TryGetComponent(out MeshRenderer meshRenderer))
                 continue;
 
-            // ReSharper disable once ShaderLabShaderReferenceNotResolved
-            meshRenderer.material.shader = Shader.Find("hatlas");
+            meshRenderer.material.shader = Shaders.HatlasShader;
             meshRenderer.material.color  = new Color(1, 1, 1, 1);
         }
     }

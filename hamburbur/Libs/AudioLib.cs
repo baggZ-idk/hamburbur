@@ -14,31 +14,31 @@ namespace hamburbur.Libs;
 
 public class AudioLib : MonoBehaviour
 {
-    private static AudioLib    instance;
     private        AudioSource source;
 
     public static AudioLib Instance
     {
         get
         {
-            if (instance == null)
+            // ReSharper disable once InvertIf
+            if (!field)
             {
                 GameObject obj = new("Hamburbur AudioLib");
-                instance = obj.AddComponent<AudioLib>();
+                field = obj.AddComponent<AudioLib>();
                 DontDestroyOnLoad(obj);
             }
 
-            return instance;
+            return field;
         }
     }
 
     private void Awake()
     {
-        if (source == null)
-        {
-            source             = gameObject.AddComponent<AudioSource>();
-            source.playOnAwake = false;
-        }
+        if (source != null)
+            return;
+
+        source             = gameObject.AddComponent<AudioSource>();
+        source.playOnAwake = false;
     }
 
     public void SpeakText(string text, float volume = 1f) => StartCoroutine(SpeakRoutine(text, volume));

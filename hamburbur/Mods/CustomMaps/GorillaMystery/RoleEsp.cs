@@ -76,7 +76,7 @@ public abstract class MysteryRoleEsp : hamburburmod
         box.transform.localScale    = Vector3.Scale(boxScale, rig.transform.localScale);
 
         Renderer renderer = box.GetComponent<Renderer>();
-        renderer.material.shader = Shader.Find("GUI/Text Shader");
+        renderer.material.shader = Shaders.TextShader;
         renderer.material.color  = new Color(RoleColour.r, RoleColour.g, RoleColour.b, 0.4f);
         renderer.enabled         = false;
         boxes[rig]               = renderer;

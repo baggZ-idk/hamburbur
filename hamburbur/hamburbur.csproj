@@ -45,6 +45,9 @@
         <Reference Include="LIV.LCK_GorillaTag">
             <HintPath>$(GameAssemblyPath)\LIV.LCK_GorillaTag.dll</HintPath>
         </Reference>
+        <Reference Include="Modio">
+          <HintPath>..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Gorilla Tag\Gorilla Tag_Data\Managed\Modio.dll</HintPath>
+        </Reference>
         <Reference Include="Mono.Security">
             <HintPath>$(GameAssemblyPath)\Mono.Security.dll</HintPath>
         </Reference>

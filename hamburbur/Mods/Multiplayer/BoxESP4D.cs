@@ -102,7 +102,7 @@ public class BoxESP4D : hamburburmod
         if (box.TryGetComponent(out Renderer renderer))
         {
             Color boxColor = GetTargetColour(rig);
-            renderer.material.shader = Shader.Find("GUI/Text Shader");
+            renderer.material.shader = Shaders.TextShader;
             renderer.material.color  = new Color(boxColor.r, boxColor.g, boxColor.b, 0.35f);
             boxes[rig]               = renderer;
         }

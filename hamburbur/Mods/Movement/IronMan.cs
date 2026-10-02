@@ -33,7 +33,7 @@ public class IronMan : hamburburmod
                     new Vector3(0.08f, Random.Range(0.05f, -0.05f), Random.Range(0.05f, -0.05f)));
 
             leftParticle.transform.rotation                       = Tools.Utils.RealLeftController.rotation;
-            leftParticle.GetComponent<Renderer>().material.shader = Shader.Find("Sprites/Default");
+            leftParticle.GetComponent<Renderer>().material.shader = Shaders.SpritesDefaultShader;
             leftParticle.GetComponent<Renderer>().material.color  = GetRandomFlameColour();
             leftParticle.Obliterate(0.3f);
         }
@@ -55,7 +55,7 @@ public class IronMan : hamburburmod
                     new Vector3(-0.08f, Random.Range(0.05f, -0.05f), Random.Range(0.05f, -0.05f)));
 
             rightParticle.transform.rotation                       = Tools.Utils.RealRightController.rotation;
-            rightParticle.GetComponent<Renderer>().material.shader = Shader.Find("Sprites/Default");
+            rightParticle.GetComponent<Renderer>().material.shader = Shaders.SpritesDefaultShader;
             rightParticle.GetComponent<Renderer>().material.color  = GetRandomFlameColour();
             rightParticle.Obliterate(0.3f);
         }

@@ -22,6 +22,37 @@ namespace hamburbur.Tools;
 
 public static class Extensions
 {
+    public static IEnumerable<Vector3> TextToPositions(this string text, Vector3 origin, Quaternion rotation,
+                                                        float pixelSpacing = 0.18f) =>
+            text.TextToPositions(origin, rotation, pixelSpacing, pixelSpacing);
+
+    public static IEnumerable<Vector3> TextToPositions(this string text, Vector3 origin, Quaternion rotation,
+                                                        float horizontalSpacing, float verticalSpacing)
+    {
+        if (string.IsNullOrEmpty(text) || horizontalSpacing <= 0f || verticalSpacing <= 0f)
+            yield break;
+
+        int column = 0;
+        int row = 0;
+        foreach (char raw in text.ToUpperInvariant())
+        {
+            if (raw == '\n')
+            {
+                column = 0;
+                row++;
+                continue;
+            }
+
+            if (Utils.BITFont.TryGetValue(raw, out Vector2Int[] pixels))
+                foreach (Vector2Int pixel in pixels)
+                    yield return origin + rotation * new Vector3(
+                            (column + pixel.x) * horizontalSpacing,
+                            (pixel.y - row * 6) * verticalSpacing, 0f);
+
+            column += 4;
+        }
+    }
+
     public static SuperSigmaType GetOrAddComponent<SuperSigmaType>(this GameObject obj)
             where SuperSigmaType : Component =>
             obj.GetComponent<SuperSigmaType>() ?? obj.AddComponent<SuperSigmaType>();
@@ -127,14 +158,22 @@ public static class Extensions
 
         TaskCompletionSource<string> tcs = new();
 
-        PlayFabClientAPI.GetAccountInfo(
-                new GetAccountInfoRequest { PlayFabId = userId, },
+        PlayFabClientAPI.GetPlayerProfile(
+                new GetPlayerProfileRequest
+                {
+                        PlayFabId = userId,
+                        ProfileConstraints = new PlayerProfileViewConstraints
+                        { ShowCreated = true, },
+                },
                 result =>
                 {
-                    string date = result.AccountInfo.Created.ToString("MMM dd, yyyy").ToUpper();
+                    string date = result.PlayerProfile.Created.Value.ToString("MMM dd, yyyy").ToUpper();
                     tcs.SetResult(date);
                 },
-                _ => { tcs.SetResult("ERROR"); });
+                _ =>
+                {
+                    tcs.SetResult("ERROR");
+                });
 
         return tcs.Task;
     }

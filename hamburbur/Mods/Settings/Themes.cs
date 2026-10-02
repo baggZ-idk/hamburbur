@@ -17,7 +17,7 @@ public class Themes : hamburburmod
 
     public static GameObject menuPrefab;
 
-    public static readonly List<(
+    public static List<(
             string Name,
             string DisplayName,
             Vector3 Position,
@@ -477,7 +477,7 @@ public class Themes : hamburburmod
                 -0.29f,
                 false
             ),
-            
+
             (
                 "spm",
                 "SPMidnight",
@@ -488,7 +488,7 @@ public class Themes : hamburburmod
                 -0.29f,
                 false
             ),
-            
+
             (
                 "hyperion",
                 "Hyperion",
@@ -518,7 +518,12 @@ public class Themes : hamburburmod
 
     protected override void Start()
     {
-        Instance         = this;
+        Instance = this;
+
+        // October - Halloween theme
+        if (DateTime.Now.Month == 10)
+            AllThemes.Insert(0, ("halloburbur", "halloburbur", Vector3.zero, Quaternion.identity, new Color(0f, 0f, 0f, 0f), new Color(0f, 0f, 0f, 0f), -0.29f, false));
+
         IncrementalValue = NormalizeIndex(IncrementalValue);
         CoroutineManager.Instance?.StartCoroutine(SynchronizeButtonsAfterStartup());
     }

@@ -95,8 +95,11 @@ public class ConsoleUserBeacons : hamburburmod
     {
         lr.startWidth     = 0.1f;
         lr.endWidth       = 0.1f;
-        lr.material       = new Material(Shader.Find("GUI/Text Shader"));
-        lr.material.color = Plugin.Instance.MainColour;
+        lr.material       = new Material(Shaders.TextShader)
+        {
+                color = Plugin.Instance.MainColour,
+        };
+
         lr.positionCount  = 2;
     }
 }

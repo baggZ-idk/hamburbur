@@ -80,7 +80,7 @@ public class TrailsESP : hamburburmod
         trail.numCapVertices    = 4;
         trail.alignment         = LineAlignment.View;
         trail.textureMode       = LineTextureMode.Stretch;
-        trail.material          = new Material(Shader.Find("GUI/Text Shader"));
+        trail.material          = new Material(Shaders.TextShader);
         trail.startColor        = colour;
         trail.endColor          = new Color(colour.r, colour.g, colour.b, 0f);
 

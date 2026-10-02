@@ -76,7 +76,7 @@ public class HandTracers : hamburburmod
         line.positionCount = 2;
         line.useWorldSpace = true;
 
-        line.material = new Material(Shader.Find("GUI/Text Shader"))
+        line.material = new Material(Shaders.TextShader)
         {
                 color = lineColor,
         };

@@ -45,7 +45,7 @@ public class SoundSpam : hamburburmod
         trail.minVertexDistance = 0.05f;
         trail.numCapVertices    = 10;
         trail.numCornerVertices = 5;
-        trail.material.shader   = Shader.Find("Sprites/Default");
+        trail.material.shader   = Shaders.SpritesDefaultShader;
         trail.time              = 1.25f;
 
         trailObject.SetActive(false);

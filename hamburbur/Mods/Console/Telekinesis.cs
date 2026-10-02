@@ -210,7 +210,7 @@ public class Telekinesis : hamburburmod
             Object.Destroy(handState.Indicator.GetComponent<Collider>());
 
             Renderer renderer = handState.Indicator.GetComponent<Renderer>();
-            renderer.material.shader = Shader.Find("GUI/Text Shader");
+            renderer.material.shader = Shaders.TextShader;
         }
 
         handState.Indicator.SetActive(true);

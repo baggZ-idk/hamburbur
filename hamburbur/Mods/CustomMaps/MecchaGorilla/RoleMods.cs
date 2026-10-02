@@ -130,7 +130,7 @@ public abstract class MecchaRoleEsp : hamburburmod
         box.transform.localRotation = Quaternion.identity;
         box.transform.localScale    = Vector3.Scale(Scale, rig.transform.localScale);
         Renderer renderer = box.GetComponent<Renderer>();
-        renderer.material.shader = Shader.Find("GUI/Text Shader");
+        renderer.material.shader = Shaders.TextShader;
         renderer.material.color  = new Color(Colour.r, Colour.g, Colour.b, 0.4f);
         boxes[rig]               = renderer;
         box.GetComponent<Collider>()?.Obliterate();

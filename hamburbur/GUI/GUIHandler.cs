@@ -201,7 +201,8 @@ public class GUIHandler : Singleton<GUIHandler>
 
         Menu.SetActive(false);
 
-        Plugin.Instance.MenuLoaded = true;
+        Plugin.Instance.MenuLoaded     = true;
+        Plugin.Instance.WhenMenuLoaded = Time.time;
         StartCoroutine(LoadSoundButtonsWhenReady());
     }
 

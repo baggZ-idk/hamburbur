@@ -30,6 +30,7 @@ public class Plugin : MonoBehaviour
 {
     public static string BeeMovieScript;
     public        bool   MenuLoaded;
+    public float WhenMenuLoaded;
     public        bool   JarvisDidFirstInitialisation;
 
     public bool PlayedStartAnim;
@@ -625,7 +626,7 @@ public class Plugin : MonoBehaviour
         vp.targetTexture = rt;
 
         Renderer renderer = quad.GetComponent<Renderer>();
-        renderer.material = new Material(Shader.Find("Unlit/Texture"))
+        renderer.material = new Material(Shaders.UnlitTextureShader)
         {
                 mainTexture = rt,
         };

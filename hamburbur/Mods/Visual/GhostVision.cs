@@ -51,7 +51,7 @@ public class GhostVision : hamburburmod
         ghost.transform.localScale    = new Vector3(5f, 5f, 1f);
 
         Renderer renderer = ghost.GetComponent<Renderer>();
-        renderer.material       = new Material(Shader.Find("GorillaTag/URPScryGlass"));
+        renderer.material       = new Material(Shaders.ScaryGlassShader);
         renderer.material.color = new Color(0f, 0f, 0f, 0f);
 
         return ghost;

@@ -11,6 +11,7 @@ public class CustomMenuName : hamburburmod
 {
     private const string PlayerPrefsKey = "hamburbur.customMenuName";
     private const int    MaxLength      = 32;
+    private const float  DelayCheck     = 10f;
 
     public static bool IsEnabled;
 
@@ -25,16 +26,14 @@ public class CustomMenuName : hamburburmod
         IsEnabled = true;
         MenuHandler.Instance?.RefreshMenuTitle();
 
-        if (!IsUserInitiatedToggle || !string.IsNullOrEmpty(GetSavedName()) || ButtonHandler.Instance == null)
-            return;
-
-        ButtonHandler.Instance.Prompt(new PromptData(
-                PromptType.AcceptAndDeny,
-                "Would you like to set a custom menu name?",
-                PromptForName,
-                null,
-                "Set Name",
-                "Not Now"));
+        if (Time.time - Plugin.Instance.WhenMenuLoaded > DelayCheck && ButtonHandler.Instance)
+            ButtonHandler.Instance.Prompt(new PromptData(
+                    PromptType.AcceptAndDeny,
+                    "Would you like to set a custom menu name?",
+                    PromptForName,
+                    null,
+                    "Set Name",
+                    "Not Now"));
     }
 
     protected override void OnDisable()

@@ -117,7 +117,6 @@ public class GRHamburburText : hamburburmod
                     nameof(hamburbur),
                     new Vector3(-35f - 25f, -70f),
                     Quaternion.Euler(0f, 0f, 0f),
-                    1f,
                     0.5f
             );
 
@@ -125,29 +124,9 @@ public class GRHamburburText : hamburburmod
         }
     }
 
-    private void DrawWord(string text, Vector3 origin, Quaternion rotation, float scale, float spacing)
+    private void DrawWord(string text, Vector3 origin, Quaternion rotation, float scale)
     {
-        Vector3 cursor = Vector3.zero;
-
-        foreach (char c in text.ToUpper())
-        {
-            if (!Tools.Utils.BITFont.TryGetValue(c, out Vector2Int[] points))
-            {
-                cursor += Vector3.right * spacing;
-
-                continue;
-            }
-
-            foreach (Vector2Int point in points)
-            {
-                Vector3 localOffset   = new(point.x * scale, point.y * scale, 0f);
-                Vector3 rotatedOffset = rotation * (cursor + localOffset);
-                Vector3 finalPos      = origin + rotatedOffset;
-
-                GRSpawnManagerSS.SpawnObjectGlobal(finalPos, rotation);
-            }
-
-            cursor += Vector3.right * spacing;
-        }
+        foreach (Vector3 position in text.TextToPositions(origin, rotation, scale))
+            GRSpawnManagerSS.SpawnObjectGlobal(position, rotation);
     }
 }

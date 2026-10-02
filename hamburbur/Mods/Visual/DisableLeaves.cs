@@ -10,7 +10,7 @@ namespace hamburbur.Mods.Visual;
         0)]
 public class DisableLeaves : hamburburmod
 {
-    private const int LeavesIndex = 17;
+    private const int LeavesIndex = 27;
 
     // If you need to update the leaves index above. Get the latest temp file name from https://hamburbur.org/data or get it manually
     // Then paste it in this constant below and make sure to compile with Constants.BetaBuild as true, enable the mod and look in your logs

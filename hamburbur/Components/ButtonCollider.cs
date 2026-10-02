@@ -137,7 +137,7 @@ public class ButtonCollider : MonoBehaviour
 
         if (presser != null && OnPhysicalPress?.Invoke(presser) == true)
         {
-            buttonPressAnimator.PlayIndicator();
+            buttonPressAnimator.Play();
 
             return true;
         }

@@ -32,7 +32,7 @@ public class EnderPearl : hamburburmod
                 pearl.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
                 if (pearlMat == null)
                 {
-                    pearlMat = new Material(Shader.Find("Universal Render Pipeline/Unlit"))
+                    pearlMat = new Material(Shaders.UniversalUnlitShader)
                     {
                             color = MenuHandler.Instance.currentMainColour,
                     };

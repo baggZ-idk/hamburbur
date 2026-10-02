@@ -669,15 +669,25 @@ public class ButtonHandler : Singleton<ButtonHandler>
             return false;
 
         if (mod.ToggleFavourite())
-            CoroutineManager.Instance?.StartCoroutine(RefreshAfterFavouriteIndicator());
+        {
+            if (AnimateButtons.IsEnabled && CoroutineManager.Instance != null)
+                CoroutineManager.Instance.StartCoroutine(RefreshAfterFavouritePress());
+            else
+                RefreshFavouriteButtons();
+        }
 
         return true;
     }
 
-    private static IEnumerator RefreshAfterFavouriteIndicator()
+    private static IEnumerator RefreshAfterFavouritePress()
     {
         yield return new WaitForSecondsRealtime(0.16f);
 
+        RefreshFavouriteButtons();
+    }
+
+    private static void RefreshFavouriteButtons()
+    {
         if (MenuHandler.Instance?.Category == Buttons.FavouriteModsCategory)
         {
             int favouriteCount = Buttons.GetFavouriteMods().Length;
@@ -686,7 +696,7 @@ public class ButtonHandler : Singleton<ButtonHandler>
             {
                 Instance?.SetCategory(nameof(Main));
 
-                yield break;
+                return;
             }
 
             int lastPage = Mathf.CeilToInt((float)favouriteCount / ButtonsPerPage) - 1;
