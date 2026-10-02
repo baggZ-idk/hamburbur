@@ -291,6 +291,7 @@ public static class Buttons
             [nameof(Visual)] =
             [
                     (typeof(GhostVision), null),
+                    (typeof(EnableTerraformer), null),
                     (typeof(ResetTime), null),
                     (typeof(TimeSetter), null),
                     (typeof(NoRain), null),
@@ -422,6 +423,8 @@ public static class Buttons
 
             ["Master Client"] =
             [
+                    (typeof(SpawnLucy), null),
+                    (typeof(LucyChaseGun), null),
                     (typeof(SpamGrayZone), null),
                     (typeof(GrayZone), null),
                     (typeof(SpamTagGun), null),
