@@ -28,19 +28,11 @@ public class SlapBattlesNextProp : hamburburmod
             IncrementalValue = Math.Clamp(IncrementalValue, 0, SlapBattlesNetwork.ObjectNames.Length - 1);
 }
 
-[hamburburmod(                "Spawn Object Gun",   "Hold to spawn the selected map object for the room",
+[hamburburmod(                "Spawn Object Gun",   "Hold to repeatedly send the selected map object's event",
         ButtonType.Togglable, AccessSetting.Public, EnabledType.Disabled, 0)]
 public class SlapBattlesSpawnGun : SlapBattlesGun
 {
-    protected override float RepeatDelay => SlapBattlesNextProp.Selected switch
-    {
-            SlapBattlesObject.Nuke or SlapBattlesObject.Blackhole => 1f,
-            SlapBattlesObject.Moai => 0.8f,
-            SlapBattlesObject.Bus or SlapBattlesObject.SilverWall or SlapBattlesObject.GoldWall or
-                    SlapBattlesObject.BoosterWall => 0.35f,
-            SlapBattlesObject.Bee => 0.3f,
-            _ => SlapBattlesNetwork.MinimumEventDelay,
-    };
+    protected override float RepeatDelay => SlapBattlesNetwork.MinimumEventDelay;
 
     protected override void Shoot()
     {
@@ -75,7 +67,7 @@ public class SlapBattlesBusConvoy : hamburburmod
         ButtonType.Togglable, AccessSetting.Public, EnabledType.Disabled, 0)]
 public class SlapBattlesBoosterWallGun : SlapBattlesGun
 {
-    protected override float RepeatDelay => 0.35f;
+    protected override float RepeatDelay => SlapBattlesNetwork.MinimumEventDelay;
 
     protected override void Shoot()
     {
@@ -125,7 +117,7 @@ public class SlapBattlesWallRing : hamburburmod
         ButtonType.Togglable, AccessSetting.Public, EnabledType.Enabled, 0)]
 public class SlapBattlesWallAntiReport : hamburburmod
 {
-    private const float RefreshInterval = 12f; // The map retires wall clones after 15 seconds.
+    private const float RefreshInterval = 12f; // The map decays walls after 15 seconds.
     private Photon.Realtime.Room room;
     private Vector3 wallCenter;
     private Quaternion wallRotation;
@@ -170,7 +162,7 @@ public class SlapBattlesWallAntiReport : hamburburmod
             outward.Normalize();
 
             Vector3 across = Vector3.Cross(outward, Vector3.up);
-            wallCenter = reportButton.position + outward * 0.45f;
+            wallCenter = reportButton.position + outward * 0.07f;
             wallRotation = Quaternion.LookRotation(across, Vector3.up);
             hasWallPosition = true;
         }
@@ -228,7 +220,7 @@ public class SlapBattlesWallAntiReport : hamburburmod
         AccessSetting.Public, EnabledType.Disabled, 0)]
 public class SlapBattlesBlackholeGun : SlapBattlesGun
 {
-    protected override float RepeatDelay => 0.7f;
+    protected override float RepeatDelay => SlapBattlesNetwork.MinimumEventDelay;
 
     protected override void Shoot()
     {
@@ -245,6 +237,29 @@ public class SlapBattlesBeeGun : SlapBattlesTargetGun
     protected override void Use(VRRig rig) =>
             SlapBattlesNetwork.Bee(SlapBattlesAim.Body + SlapBattlesAim.Forward * 2f,
                     rig.Creator.ActorNumber);
+}
+
+public abstract class SlapBattlesLucyGunBase : SlapBattlesTargetGun
+{
+    protected abstract bool Red { get; }
+
+    protected override void Use(VRRig rig) =>
+            SlapBattlesNetwork.Lucy(SlapBattlesAim.Body + SlapBattlesAim.Forward * 2f + Vector3.up * 0.3f,
+                    rig.Creator.ActorNumber, Red);
+}
+
+[hamburburmod("Lucy Gun", "Summon the map's Lucy to chase the targeted player",
+        ButtonType.Togglable, AccessSetting.Public, EnabledType.Disabled, 0)]
+public class SlapBattlesLucyGun : SlapBattlesLucyGunBase
+{
+    protected override bool Red => false;
+}
+
+[hamburburmod("Red Lucy Gun", "Summon the faster Red Lucy variant after the targeted player",
+        ButtonType.Togglable, AccessSetting.Public, EnabledType.Disabled, 0)]
+public class SlapBattlesRedLucyGun : SlapBattlesLucyGunBase
+{
+    protected override bool Red => true;
 }
 
 [hamburburmod(                "Bee Storm",          "Send a synchronized bee after every other player", ButtonType.Fixed,
@@ -282,7 +297,7 @@ public class SlapBattlesBusBurst : hamburburmod
         ButtonType.Togglable, AccessSetting.Public, EnabledType.Disabled, 0)]
 public class SlapBattlesNukeGun : SlapBattlesGun
 {
-    protected override float RepeatDelay => 1f;
+    protected override float RepeatDelay => SlapBattlesNetwork.MinimumEventDelay;
 
     protected override void Shoot()
     {
@@ -294,12 +309,42 @@ public class SlapBattlesNukeGun : SlapBattlesGun
         ButtonType.Togglable, AccessSetting.Public, EnabledType.Disabled, 0)]
 public class SlapBattlesMoaiGun : SlapBattlesGun
 {
-    protected override float RepeatDelay => 0.8f;
+    protected override float RepeatDelay => SlapBattlesNetwork.MinimumEventDelay;
 
     protected override void Shoot()
     {
         if (Gun.Hit.collider != null)
             SlapBattlesNetwork.Moai(Gun.Hit.point, SlapBattlesAim.Forward);
+    }
+}
+
+[hamburburmod("Frank Wall Gun", "Place the larger five second Frank wall from the updated map",
+        ButtonType.Togglable, AccessSetting.Public, EnabledType.Disabled, 0)]
+public class SlapBattlesFrankWallGun : SlapBattlesGun
+{
+    protected override float RepeatDelay => SlapBattlesNetwork.MinimumEventDelay;
+
+    protected override void Shoot()
+    {
+        if (Gun.Hit.collider == null || !SlapBattlesNetwork.SupportsAbilityChecks) return;
+        Vector3 direction = Gun.Hit.point - SlapBattlesAim.Body;
+        direction.y = 0f;
+        if (direction.sqrMagnitude < 0.01f) direction = Vector3.forward;
+        SlapBattlesNetwork.FrankWall(Gun.Hit.point + Vector3.up * 1.25f,
+                Quaternion.LookRotation(direction) * Quaternion.Euler(0f, -90f, 0f));
+    }
+}
+
+[hamburburmod("Planet Gun", "Spawn the map's Moon Slap planet near the pointed spot",
+        ButtonType.Togglable, AccessSetting.Public, EnabledType.Disabled, 0)]
+public class SlapBattlesPlanetGun : SlapBattlesGun
+{
+    protected override float RepeatDelay => SlapBattlesNetwork.MinimumEventDelay;
+
+    protected override void Shoot()
+    {
+        if (Gun.Hit.collider != null && SlapBattlesNetwork.SupportsAbilityChecks)
+            SlapBattlesNetwork.Planet(Gun.Hit.point + Vector3.up * 2f);
     }
 }
 

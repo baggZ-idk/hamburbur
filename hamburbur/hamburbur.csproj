@@ -3,6 +3,7 @@
     <PropertyGroup>
         <TargetFramework>netstandard2.1</TargetFramework>
         <LangVersion>Latest</LangVersion>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
     <ItemGroup>
@@ -14,6 +15,9 @@
         </Reference>
         <Reference Include="Assembly-CSharp-firstpass">
             <HintPath>$(GameAssemblyPath)\Assembly-CSharp-firstpass.dll</HintPath>
+        </Reference>
+        <Reference Include="Unity.Collections">
+            <HintPath>$(GameAssemblyPath)\Unity.Collections.dll</HintPath>
         </Reference>
         <Reference Include="Backtrace.Unity">
             <HintPath>$(GameAssemblyPath)\Backtrace.Unity.dll</HintPath>
@@ -329,17 +333,6 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="System.Collections.Immutable" Version="11.0.0-preview.3.26207.106"/>
-    </ItemGroup>
-
-    <ItemGroup>
-        <None Remove="Resources\hamburbur"/>
-        <None Remove="Resources\error.png"/>
-        <EmbeddedResource Include="Resources\error.png"/>
-        <EmbeddedResource Include="Resources\hamburbur.png"/>
-        <None Remove="Resources\fin.png"/>
-        <EmbeddedResource Include="Resources\fin.png"/>
-        <None Remove="Resources\realHamburbur.png"/>
-        <EmbeddedResource Include="Resources\realHamburbur.png"/>
     </ItemGroup>
 
     <ItemGroup>

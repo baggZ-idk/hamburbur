@@ -102,7 +102,7 @@ public class SlapBattlesGreenBallCrossfire : hamburburmod
         ButtonType.Togglable, AccessSetting.Public, EnabledType.Disabled, 0)]
 public class SlapBattlesBossBallGun : SlapBattlesGun
 {
-    protected override float RepeatDelay => 0.3f;
+    protected override float RepeatDelay => SlapBattlesNetwork.MinimumEventDelay;
 
     protected override void Shoot()
     {

@@ -66,15 +66,21 @@ public class FileManager : Singleton<FileManager>
         if (!Directory.Exists(MacrosFolder))
             Directory.CreateDirectory(MacrosFolder);
 
-        if (!Directory.Exists(EventLoggerFolder))
-            Directory.CreateDirectory(EventLoggerFolder);
+        if (!Directory.Exists(PlayerLoggerFolder))
+            Directory.CreateDirectory(PlayerLoggerFolder);
 
         if (!Directory.Exists(EventLoggerFolder))
             Directory.CreateDirectory(EventLoggerFolder);
 
-        RigUtils.OnRigCosmeticsLoaded += rig => SavePlayerData(rig.creator.UserId,   rig.creator.SanitizedNickName,
-                                                 rig._playerOwnedCosmetics.Concat(), rig.IsOnSteam(),
-                                                 rig.GetPhotonPlayer().CustomProperties);
+        RigUtils.OnRigCosmeticsLoaded += rig =>
+        {
+            if (rig?.Creator == null || rig.GetPhotonPlayer() == null)
+                return;
+
+            SavePlayerData(rig.Creator.UserId, rig.Creator.SanitizedNickName,
+                    rig._playerOwnedCosmetics.Concat(), rig.IsOnSteam(),
+                    rig.GetPhotonPlayer().CustomProperties);
+        };
     }
 
     private void Update()
@@ -272,18 +278,12 @@ public class FileManager : Singleton<FileManager>
 
     public string CreateEventLoggerFile()
     {
-        if (string.IsNullOrEmpty(EventLoggerFolder))
-        {
-            EventLoggerFolder = Path.Combine(RootHamburburFolder, "Logged Events");
-
-            if (!Directory.Exists(EventLoggerFolder))
-                Directory.CreateDirectory(EventLoggerFolder);
-        }
-
-        string fileDir = Path.Combine(EventLoggerFolder, $"{DateTime.UtcNow:yyyy-MM-dd_HH-mm-ss}.txt");
-        File.Create(fileDir).Dispose();
-
-        return fileDir;
+        EventLoggerFolder ??= Path.Combine(RootHamburburFolder, "Logged Events");
+        Directory.CreateDirectory(EventLoggerFolder);
+        string path = Path.Combine(EventLoggerFolder,
+                $"{DateTime.UtcNow:yyyy-MM-dd_HH-mm-ss-fff}-{Guid.NewGuid():N}.pel");
+        using (new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.ReadWrite)) { }
+        return path;
     }
 
     public void SavePlayerData(string    userId, string username, string rawCosmeticsString, bool isPc,
@@ -291,24 +291,32 @@ public class FileManager : Singleton<FileManager>
     {
         try
         {
-            if (string.IsNullOrEmpty(PlayerLoggerFolder))
-            {
-                PlayerLoggerFolder = Path.Combine(RootHamburburFolder, "Logged Players");
-
-                if (!Directory.Exists(PlayerLoggerFolder))
-                    Directory.CreateDirectory(PlayerLoggerFolder);
-            }
+            PlayerLoggerFolder ??= Path.Combine(RootHamburburFolder, "Logged Players");
+            Directory.CreateDirectory(PlayerLoggerFolder);
 
             username = Path.GetInvalidFileNameChars()
-                           .Aggregate(username, (current, c) => current.Replace(c.ToString(), ""));
+                           .Aggregate(username ?? "UNKNOWN", (current, c) => current.Replace(c.ToString(), ""));
+            userId = Path.GetInvalidFileNameChars()
+                         .Aggregate(userId ?? "UNKNOWN", (current, c) => current.Replace(c.ToString(), ""));
 
-            string filePath = Path.Combine(PlayerLoggerFolder, $"{username}-{userId}.json");
+            string filePath = Path.Combine(PlayerLoggerFolder,
+                    $"{username}-{userId}-{DateTime.UtcNow:yyyyMMddHHmmssfffffff}-{Guid.NewGuid():N}.json");
 
-            Dictionary<string, object> convertedProps = new();
+            JObject convertedProps = new();
 
             if (customProperties != null)
                 foreach (DictionaryEntry entry in customProperties)
-                    convertedProps[entry.Key.ToString()] = entry.Value;
+                {
+                    string key = entry.Key?.ToString() ?? "null";
+                    try
+                    {
+                        convertedProps[key] = entry.Value == null ? JValue.CreateNull() : JToken.FromObject(entry.Value);
+                    }
+                    catch
+                    {
+                        convertedProps[key] = entry.Value?.ToString();
+                    }
+                }
 
             JObject json = new()
             {
@@ -316,10 +324,12 @@ public class FileManager : Singleton<FileManager>
                     [nameof(name)]               = username,
                     [nameof(rawCosmeticsString)] = rawCosmeticsString,
                     [nameof(isPc)]               = isPc,
-                    [nameof(customProperties)]   = JObject.FromObject(convertedProps),
+                    [nameof(customProperties)]   = convertedProps,
             };
 
-            File.WriteAllText(filePath, json.ToString());
+            using (FileStream stream = new(filePath, FileMode.CreateNew, FileAccess.Write, FileShare.Read))
+                using (StreamWriter writer = new(stream, new UTF8Encoding(false)))
+                    writer.Write(json.ToString());
 
             Debug.Log($"[FileManager] Saved player data: {filePath}");
         }

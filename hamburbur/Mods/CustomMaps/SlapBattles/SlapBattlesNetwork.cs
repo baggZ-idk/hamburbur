@@ -26,6 +26,8 @@ internal enum SlapBattlesObject
     Orb,
     BigOrb,
     BoosterWall,
+    FrankWall,
+    Planet,
 }
 
 internal static class SlapBattlesNetwork
@@ -34,18 +36,15 @@ internal static class SlapBattlesNetwork
 
     private const int MaxQueuedEvents = 220;
     internal static readonly string[] ObjectNames =
-            ["Wall", "Bus", "Silver Wall", "Gold Wall", "Pumpkin", "Green Ball", "Bee", "Blackhole", "EMP Shock",
-                    "Nuke", "Moai", "Orb", "Big Orb", "Booster Wall",];
+    [
+            "Wall", "Bus", "Silver Wall", "Gold Wall", "Pumpkin", "Green Ball", "Bee", "Blackhole", "EMP Shock",
+            "Nuke", "Moai", "Orb", "Big Orb", "Booster Wall", "Frank Wall", "Planet",
+    ];
     private static readonly Queue<PendingEvent> PriorityEvents = new();
     private static readonly Queue<PendingEvent> VisualEvents   = new();
-    private static readonly Queue<PropImpact>   PropImpacts    = new();
     private static readonly Vector3             WallMeshOffset = new(0.444f, 0.349f, 0.463f);
     private static          Coroutine           sendRoutine;
-    private static          bool                propImpactRunning;
     private static          float               nextEventTime;
-    private static          float               nextPropRangeNotice;
-    private static readonly object              PropImpactOwner = new();
-
     internal static bool IsInMap => PhotonNetwork.InRoom &&
                                     CustomGameMode.LuaScript?.Contains("SlapBattles") == true;
 
@@ -53,7 +52,10 @@ internal static class SlapBattlesNetwork
                                              CustomGameMode.LuaScript.Contains("elseif tag == \"nukeDropped\"");
 
     internal static bool SupportsBoosterWall => IsInMap &&
-                                                  CustomGameMode.LuaScript.Contains("boosterwall = { sourceNames = { \"BoosterWall\" }");
+                                                CustomGameMode.LuaScript.Contains("boosterwall = { sourceNames = { \"BoosterWall\" }");
+
+    internal static bool SupportsAbilityChecks => IsInMap &&
+                                                  CustomGameMode.LuaScript.Contains("function allowAbility(sender, ability, spot, key)");
 
     internal static Player PlayerFor(int actorNumber) =>
             PhotonNetwork.InRoom ? PhotonNetwork.CurrentRoom?.GetPlayer(actorNumber) : null;
@@ -66,26 +68,30 @@ internal static class SlapBattlesNetwork
         if (!SupportsBoosterWall || !SlapBattlesNearbySourceRelay.IsEnabled ||
             SlapBattlesRigRangeProxy.IsReadyFor(targetActor))
             return PhotonNetwork.LocalPlayer;
+
         return FindRelaySource(targetActor, maxDistance) ?? PhotonNetwork.LocalPlayer;
     }
 
     private static Player FindRelaySource(int targetActor, float maxDistance)
     {
         VRRig target = targetActor.Rig();
+
         if (target == null || NetworkSystem.Instance == null) return null;
         if (Vector3.Distance(SlapBattlesAim.Body, target.transform.position) < maxDistance - 3f)
             return null;
 
-        VRRig closest = null;
+        VRRig closest         = null;
         float closestDistance = (maxDistance - 3f) * (maxDistance - 3f);
         foreach (VRRig rig in NetworkSystem.Instance.Rigs())
         {
             if (rig?.Creator == null || rig.Creator.ActorNumber == targetActor) continue;
             float distance = (rig.transform.position - target.transform.position).sqrMagnitude;
+
             if (distance >= closestDistance) continue;
-            closest = rig;
+            closest         = rig;
             closestDistance = distance;
         }
+
         return closest == null ? null : PlayerFor(closest.Creator.ActorNumber);
     }
 
@@ -105,7 +111,11 @@ internal static class SlapBattlesNetwork
         if (Finite(position))
         {
             if (SupportsBoosterWall)
-                TargetEvent("gridSwapped", actorNumber, position, SourceFor(actorNumber, 30f));
+            {
+                Player source = SourceFor(actorNumber, 30f);
+                if (PrepareTargetAbility(source, "GridSlap"))
+                    TargetEvent("gridSwapped", actorNumber, position, source);
+            }
             else
                 TargetEvent("gridSwapped", actorNumber, position);
         }
@@ -115,12 +125,19 @@ internal static class SlapBattlesNetwork
     {
         if (eventName is not ("trapped" or "slowed" or "empd" or "glitched" or "redacted")) return;
         if (SupportsBoosterWall)
-            TargetEvent(eventName, actorNumber, SourceFor(actorNumber, 25f));
+        {
+            Player source = SourceFor(actorNumber, 25f);
+
+            if (eventName == "trapped" && !PrepareTargetAbility(source, "TrapSlap") ||
+                eventName == "empd"    && !PrepareTargetAbility(source, "AdminSlap")) return;
+
+            TargetEvent(eventName, actorNumber, source);
+        }
         else
             TargetEvent(eventName, actorNumber);
     }
 
-    internal static void Shield(int actorNumber) => TargetEvent("shielded",  actorNumber, 8d);
+    internal static void Shield(int actorNumber) => TargetEvent("shielded", actorNumber, 8d);
     internal static void Bomb(int actorNumber)
     {
         if (SupportsBoosterWall)
@@ -132,7 +149,42 @@ internal static class SlapBattlesNetwork
     internal static void Stopwatch(int actorNumber)
     {
         if (!SupportsNewSlaps) return;
-        TargetEvent("stopwatched", actorNumber, SourceFor(actorNumber, 25f));
+        Player source = SourceFor(actorNumber, 25f);
+        if (PrepareTargetAbility(source, "StopwatchSlap"))
+            TargetEvent("stopwatched", actorNumber, source);
+    }
+
+    internal static void StopwatchAll()
+    {
+        if (!SupportsNewSlaps || NetworkSystem.Instance == null) return;
+        HashSet<int> prepared = new();
+        foreach (VRRig rig in NetworkSystem.Instance.Rigs())
+        {
+            if (rig?.Creator == null) continue;
+            int    actor  = rig.Creator.ActorNumber;
+            Player source = SourceFor(actor, 25f);
+
+            if (source == null) continue;
+            if (!prepared.Contains(source.ActorNumber))
+            {
+                if (!PrepareTargetAbility(source, "StopwatchSlap")) continue;
+                prepared.Add(source.ActorNumber);
+            }
+
+            TargetEvent("stopwatched", actor, source);
+        }
+    }
+
+    internal static void EmpPulse(Vector3 center)
+    {
+        if (!IsInMap || NetworkSystem.Instance == null) return;
+        EmpShock(center);
+        Player source = PhotonNetwork.LocalPlayer;
+
+        if (!PrepareTargetAbility(source, "AdminSlap")) return;
+        foreach (VRRig rig in NetworkSystem.Instance.Rigs())
+            if (rig?.Creator != null && Vector3.Distance(center, rig.transform.position) <= 14f)
+                TargetEvent("empd", rig.Creator.ActorNumber, source);
     }
 
     internal static void ErrorScreen(int actorNumber)
@@ -146,17 +198,13 @@ internal static class SlapBattlesNetwork
         }
     }
 
-    internal static void KillCredit(int actorNumber)
-    {
-        if (SupportsNewSlaps) TargetEvent("killCredit", actorNumber);
-    }
-
     internal static void Boomerang(int actorNumber, Vector3 direction)
     {
         Player target = PlayerFor(actorNumber);
+
         if (target == null || !Finite(direction)) return;
         if (direction.sqrMagnitude < 0.01f) direction = Vector3.forward;
-        Send("handArmed", ReceiverGroup.All, 1d, target);
+        Send("handArmed", ReceiverGroup.All, 1d,                   target);
         Send("boomerang", ReceiverGroup.All, direction.normalized, target);
     }
 
@@ -171,19 +219,23 @@ internal static class SlapBattlesNetwork
     {
         if (!IsInMap) return false;
         Player target = PlayerFor(actorNumber);
-        int index = SlapBattlesLocalProgress.PlayableSlapIndex(name);
+        int    index  = SlapBattlesLocalProgress.PlayableSlapIndex(name);
+
         if (target == null || target == PhotonNetwork.LocalPlayer || index == 0) return false;
         Send("slapEquipped", ReceiverGroup.All, (double)index, target);
-        Send("handArmed", ReceiverGroup.All, 1d, target);
+        Send("handArmed",    ReceiverGroup.All, 1d,            target);
+
         return true;
     }
 
     internal static bool DisguiseAsSlap(string name)
     {
         int index = SlapBattlesLocalProgress.PlayableSlapIndex(name);
+
         if (!IsInMap || index == 0 || PhotonNetwork.LocalPlayer == null) return false;
         Send("slapEquipped", ReceiverGroup.All, (double)index, PhotonNetwork.LocalPlayer);
-        Send("handArmed", ReceiverGroup.All, 1d, PhotonNetwork.LocalPlayer);
+        Send("handArmed",    ReceiverGroup.All, 1d,            PhotonNetwork.LocalPlayer);
+
         return true;
     }
 
@@ -197,9 +249,8 @@ internal static class SlapBattlesNetwork
     {
         if (!SupportsNewSlaps) return;
         Player target = PlayerFor(actorNumber);
+
         if (target == null) return;
-        // The map only builds a rock when there is no existing rock entry. Clear it before
-        // setting a new type so Rock and MegaRock can replace one another.
         if (on) Send("rocked", ReceiverGroup.All, 0d, target, 0d);
         Send("rocked", ReceiverGroup.All, on ? 1d : 0d, target, mega ? 1d : 0d);
     }
@@ -210,8 +261,8 @@ internal static class SlapBattlesNetwork
 
         if (target == null || !Finite(position)) return;
         Photon.Realtime.Room room = PhotonNetwork.CurrentRoom;
-        Enqueue("beesSpawned",                                              ReceiverGroup.All,
-                () => StartTracking(TrackBee(position, actorNumber, room)), position, target);
+        AbilitySpawn("beesSpawned",                                         "BeeSlap", position,
+                () => StartTracking(TrackBee(position, actorNumber, room)), position,  target);
     }
 
     internal static void FlingAll(Vector3 center, float force, bool inward = false)
@@ -238,6 +289,12 @@ internal static class SlapBattlesNetwork
         {
             case SlapBattlesObject.Wall:
                 Wall(point + Vector3.up * 0.85f, Quaternion.LookRotation(forward) * Quaternion.Euler(0f, -90f, 0f));
+
+                break;
+
+            case SlapBattlesObject.FrankWall:
+                FrankWall(point + Vector3.up * 1.25f,
+                        Quaternion.LookRotation(forward) * Quaternion.Euler(0f, -90f, 0f));
 
                 break;
 
@@ -286,7 +343,8 @@ internal static class SlapBattlesNetwork
                     }
                 }
 
-                if (targetActor != 0) Bee(point + Vector3.up, targetActor);
+                if (targetActor != 0)
+                    Bee(SlapBattlesAim.Body + SlapBattlesAim.Forward * 2f + Vector3.up, targetActor);
 
                 break;
 
@@ -296,7 +354,7 @@ internal static class SlapBattlesNetwork
                 break;
 
             case SlapBattlesObject.EmpShock:
-                Send("empShock", ReceiverGroup.All, point + Vector3.up);
+                EmpShock(point + Vector3.up);
 
                 break;
 
@@ -307,6 +365,11 @@ internal static class SlapBattlesNetwork
 
             case SlapBattlesObject.Moai:
                 Moai(point, forward);
+
+                break;
+
+            case SlapBattlesObject.Planet:
+                Planet(point + Vector3.up * 2f);
 
                 break;
 
@@ -322,7 +385,8 @@ internal static class SlapBattlesNetwork
     {
         if (!SupportsNewSlaps || !Finite(ground)) return;
         Photon.Realtime.Room room = PhotonNetwork.CurrentRoom;
-        Enqueue("nukeDropped", ReceiverGroup.All, () => StartTracking(TrackNuke(ground, room)), ground);
+        AbilitySpawn("nukeDropped",                           "NukeSlap", ground,
+                () => StartTracking(TrackNuke(ground, room)), ground);
     }
 
     internal static void Moai(Vector3 point, Vector3 forward)
@@ -330,26 +394,34 @@ internal static class SlapBattlesNetwork
         if (!SupportsNewSlaps || !Finite(point) || !Finite(forward)) return;
         forward.y = 0f;
         if (forward.sqrMagnitude < 0.01f) forward = Vector3.forward;
-        Quaternion rotation = Quaternion.LookRotation(forward) * Quaternion.Euler(0f, 180f, 0f);
-        Photon.Realtime.Room room = PhotonNetwork.CurrentRoom;
-        Enqueue("moaiSpawned", ReceiverGroup.All, () => StartTracking(TrackMoai(point, room)), point, rotation);
+        Quaternion           rotation             = Quaternion.LookRotation(forward) * Quaternion.Euler(0f, 180f, 0f);
+        Photon.Realtime.Room room                 = PhotonNetwork.CurrentRoom;
+        AbilitySpawn("moaiSpawned",                          "MoaiSlap", point,
+                () => StartTracking(TrackMoai(point, room)), point,      rotation);
     }
 
     internal static void Orb(bool big, Vector3 origin, Vector3 direction)
     {
         if (!SupportsNewSlaps || !Finite(origin) || !Finite(direction)) return;
         if (direction.sqrMagnitude < 0.01f) direction = Vector3.forward;
-        Vector3 velocity = direction.normalized * (big ? 20f : 14f);
-        Photon.Realtime.Room room = PhotonNetwork.CurrentRoom;
-        Enqueue("orbThrown", ReceiverGroup.All,
-                () => StartTracking(TrackOrb(origin, velocity, big, room)), origin, velocity, big ? 1d : 0d);
+        Vector3              velocity                 = direction.normalized * (big ? 20f : 14f);
+        Photon.Realtime.Room room                     = PhotonNetwork.CurrentRoom;
+        AbilitySpawn("orbThrown",                                           "KillStreakSlap", origin,
+                () => StartTracking(TrackOrb(origin, velocity, big, room)), origin,           velocity, big ? 1d : 0d);
     }
 
     internal static void Wall(Vector3 center, Quaternion rotation)
     {
         if (!Finite(center) || !Finite(rotation)) return;
         Vector3 pivot = center - rotation * WallMeshOffset;
-        Send("wallRaised", ReceiverGroup.All, pivot, rotation);
+        AbilitySpawn("wallRaised", "AdminSlap", center, null, pivot, rotation);
+    }
+
+    internal static void FrankWall(Vector3 center, Quaternion rotation)
+    {
+        if (!SupportsAbilityChecks || !Finite(center) || !Finite(rotation)) return;
+        Vector3 pivot = center - rotation * (WallMeshOffset * 1.52f);
+        AbilitySpawn("wallRaised", "FrankSlap", center, null, pivot, rotation);
     }
 
     internal static void Bus(Vector3 point, Vector3 direction, int kind)
@@ -360,7 +432,7 @@ internal static class SlapBattlesNetwork
         direction.Normalize();
 
         Vector3 strikeCenter = point + Vector3.up * (kind == 1 ? 0.1f : 0.5f);
-        Vector3 origin = strikeCenter;
+        Vector3 origin       = strikeCenter;
         if (kind != 1)
         {
             Quaternion rotation = Quaternion.LookRotation(direction) * Quaternion.Euler(0f, -90f, 0f);
@@ -368,7 +440,12 @@ internal static class SlapBattlesNetwork
         }
 
         Photon.Realtime.Room room = PhotonNetwork.CurrentRoom;
-        Enqueue("busSpawned",                                          ReceiverGroup.All,
+        string slap = kind switch
+                      {
+                              2 => "10KSlap", 3 => "100KSlap", 4 => "BoosterSlap", var _ => "BusSlap",
+                      };
+
+        AbilitySpawn("busSpawned",                                            slap,   strikeCenter,
                 () => StartTracking(TrackBus(strikeCenter, direction, room)), origin, direction, (double)kind);
     }
 
@@ -377,7 +454,8 @@ internal static class SlapBattlesNetwork
         if (Finite(origin) && Finite(velocity))
         {
             Photon.Realtime.Room room = PhotonNetwork.CurrentRoom;
-            Enqueue(green ? "sludgeThrown" : "pumpkinThrown",                     ReceiverGroup.All,
+            AbilitySpawn(green ? "sludgeThrown" : "pumpkinThrown",
+                    green ? "SludgeSlap" : "SpookySlap",                          origin,
                     () => StartTracking(TrackProjectile(origin, velocity, room)), origin, velocity);
         }
     }
@@ -386,13 +464,118 @@ internal static class SlapBattlesNetwork
     {
         if (!Finite(position)) return;
         Photon.Realtime.Room room = PhotonNetwork.CurrentRoom;
-        Enqueue("blackholeSpawned",                                  ReceiverGroup.All,
+        AbilitySpawn("blackholeSpawned",                             "BlackholeSlap", position,
                 () => StartTracking(TrackBlackhole(position, room)), position);
     }
 
     internal static void EmpShock(Vector3 position)
     {
-        if (Finite(position)) Send("empShock", ReceiverGroup.All, position);
+        if (Finite(position)) AbilitySpawn("empShock", "AdminSlap", position, null, position);
+    }
+
+    internal static void Planet(Vector3 position)
+    {
+        if (SupportsAbilityChecks && Finite(position))
+            AbilitySpawn("planetSpawned", "MoonSlap", position, null, position);
+    }
+
+    internal static void Lucy(Vector3 position, int targetActor, bool red)
+    {
+        if (!SupportsAbilityChecks || !Finite(position)) return;
+        Player target = PlayerFor(targetActor);
+        Player source = PhotonNetwork.LocalPlayer;
+        int    index  = SlapBattlesLocalProgress.PlayableSlapIndex("LucySlap");
+
+        if (target                                    == null || source == null || index == 0 ||
+            PriorityEvents.Count + VisualEvents.Count > MaxQueuedEvents - 2) return;
+
+        Send("slapEquipped",   source == PhotonNetwork.LocalPlayer ? ReceiverGroup.Others : ReceiverGroup.All,
+                (double)index, source, 0d);
+
+        double kind = red ? 2d : 1d;
+        Enqueue("lucySpawned", ReceiverGroup.Others,
+                () => SlapBattlesLocalVisual.Spawn("lucySpawned", [position, target, source, kind,]),
+                position, target, source, kind);
+    }
+
+    internal static void SpawnGoldenSlapples()
+    {
+        if (!IsInMap || !SupportsAbilityChecks) return;
+        Player host = null;
+        foreach (Player player in PhotonNetwork.PlayerList)
+            if (player != null && (host == null || player.ActorNumber < host.ActorNumber))
+                host = player;
+
+        if (host == null) return;
+        for (int i = 1; i <= 5; i++)
+            Send("slappleSpawn", ReceiverGroup.All, (double)i, 2d, host);
+    }
+
+    private static void AbilitySpawn(string tag,    string          slap, Vector3 spot,
+                                     Action onSent, params object[] arguments)
+    {
+        if (!IsInMap || !Finite(spot)) return;
+        if (!SupportsAbilityChecks)
+        {
+            Enqueue(tag, ReceiverGroup.All, onSent, arguments);
+
+            return;
+        }
+
+        Player source = ClosestSource(spot);
+
+        if (source == null) return;
+
+        int index = SlapBattlesLocalProgress.PlayableSlapIndex(slap);
+
+        if (index                                     == 0 ||
+            PriorityEvents.Count + VisualEvents.Count > MaxQueuedEvents - 2) return;
+
+        Send("slapEquipped",   source == PhotonNetwork.LocalPlayer ? ReceiverGroup.Others : ReceiverGroup.All,
+                (double)index, source, 0d);
+
+        bool     frankWall = tag == "wallRaised" && slap == "FrankSlap";
+        object[] payload   = new object[arguments.Length + (frankWall ? 2 : 1)];
+        Array.Copy(arguments, payload, arguments.Length);
+        payload[arguments.Length] = source;
+        if (frankWall) payload[arguments.Length + 1] = 1d;
+        Enqueue(tag, ReceiverGroup.Others, () =>
+                                           {
+                                               SlapBattlesLocalVisual.Spawn(tag, payload);
+                                               onSent?.Invoke();
+                                           }, payload);
+    }
+
+    private static Player ClosestSource(Vector3 spot)
+    {
+        Player nearest = PhotonNetwork.LocalPlayer;
+        float bestDistance = nearest == null ? float.PositiveInfinity :
+                                     (SlapBattlesAim.Body - spot).sqrMagnitude;
+
+        if (NetworkSystem.Instance == null) return nearest;
+        foreach (VRRig rig in NetworkSystem.Instance.Rigs())
+        {
+            if (rig?.Creator == null || rig.Creator.ActorNumber == PhotonNetwork.LocalPlayer?.ActorNumber) continue;
+            float distance = (rig.transform.position - spot).sqrMagnitude;
+
+            if (distance >= bestDistance) continue;
+            nearest      = PlayerFor(rig.Creator.ActorNumber);
+            bestDistance = distance;
+        }
+
+        return nearest;
+    }
+
+    private static bool PrepareTargetAbility(Player source, string slap)
+    {
+        if (source == null || !SupportsAbilityChecks) return source != null;
+        int index = SlapBattlesLocalProgress.PlayableSlapIndex(slap);
+
+        if (index == 0 || PriorityEvents.Count + VisualEvents.Count > MaxQueuedEvents - 2) return false;
+        Send("slapEquipped",   source == PhotonNetwork.LocalPlayer ? ReceiverGroup.Others : ReceiverGroup.All,
+                (double)index, source, 0d);
+
+        return true;
     }
 
     internal static void Spell(string text, Vector3 point, Quaternion layout)
@@ -435,7 +618,10 @@ internal static class SlapBattlesNetwork
         Array.Copy(arguments, 0, payload, 1, arguments.Length);
         bool priority = eventName is "slapped" or "gridSwapped" or "trapped" or "bombGiven" or
                                      "shielded" or "empd" or "slowed" or "glitched" or "redacted" or
-                                     "stopwatched" or "errored";
+                                     "stopwatched" or "errored" or "slapEquipped" or "wallRaised" or
+                                     "busSpawned" or "beesSpawned" or "blackholeSpawned" or "empShock" or
+                                     "pumpkinThrown" or "sludgeThrown" or "moaiSpawned" or "nukeDropped" or
+                                     "orbThrown" or "planetSpawned" or "lucySpawned";
 
         (priority ? PriorityEvents : VisualEvents).Enqueue(new PendingEvent
         {
@@ -465,11 +651,11 @@ internal static class SlapBattlesNetwork
 
             if (!IsInMap || !ReferenceEquals(pending.Room, PhotonNetwork.CurrentRoom)) continue;
 
-            PhotonNetwork.RaiseEvent(CustomMapUtils.EventCode, pending.Payload,
+            bool sent = PhotonNetwork.RaiseEvent(CustomMapUtils.EventCode, pending.Payload,
                     new RaiseEventOptions { Receivers = pending.Receivers, }, SendOptions.SendReliable);
 
             nextEventTime = Time.realtimeSinceStartup + MinimumEventDelay;
-            pending.OnSent?.Invoke();
+            if (sent) pending.OnSent?.Invoke();
 
             yield return null;
         }
@@ -486,75 +672,7 @@ internal static class SlapBattlesNetwork
     private static void PropFling(int actorNumber, Vector3 velocity, Photon.Realtime.Room room)
     {
         if (!IsInMap || !ReferenceEquals(room, PhotonNetwork.CurrentRoom)) return;
-
-        VRRig target = actorNumber.Rig();
-        if (target?.Creator == null) return;
-        bool localSourceNear = !SlapBattlesRigRangeProxy.IsBusy && RigUtils.IsRigEnabled &&
-                               Vector3.Distance(SlapBattlesAim.Body, target.transform.position) <= 117f;
-        if (localSourceNear || SlapBattlesRigRangeProxy.IsReadyFor(actorNumber) ||
-            HasRelaySource(actorNumber, 120f))
-        {
-            Fling(actorNumber, velocity);
-            return;
-        }
-
-        if (!SlapBattlesRigRangeAssist.IsEnabled)
-        {
-            if (Time.realtimeSinceStartup >= nextPropRangeNotice)
-            {
-                SlapBattlesLocalProgress.Notify("Distant prop hit needs Rig Range Assist or Nearby Source Relay.");
-                nextPropRangeNotice = Time.realtimeSinceStartup + 5f;
-            }
-            return;
-        }
-
-        if (PropImpacts.Count >= 24) return;
-        PropImpacts.Enqueue(new PropImpact(actorNumber, velocity, room));
-        if (propImpactRunning) return;
-        MonoBehaviour runner = CoroutineManager.Instance != null ? CoroutineManager.Instance : Plugin.Instance;
-        if (runner == null) return;
-        propImpactRunning = true;
-        runner.StartCoroutine(DrainPropImpacts());
-    }
-
-    private static IEnumerator DrainPropImpacts()
-    {
-        try
-        {
-            while (PropImpacts.Count > 0)
-            {
-                PropImpact impact = PropImpacts.Dequeue();
-                if (!SlapBattlesRigRangeAssist.IsEnabled || !IsInMap ||
-                    !ReferenceEquals(impact.Room, PhotonNetwork.CurrentRoom))
-                    continue;
-
-                float deadline = Time.realtimeSinceStartup + 4f;
-                bool ready = false;
-                while (Time.realtimeSinceStartup < deadline && SlapBattlesRigRangeAssist.IsEnabled &&
-                       ReferenceEquals(impact.Room, PhotonNetwork.CurrentRoom))
-                {
-                    VRRig target = impact.Actor.Rig();
-                    if (target?.Creator == null) break;
-                    ready = SlapBattlesRigRangeProxy.Prepare(PropImpactOwner, target);
-                    if (ready) break;
-                    yield return null;
-                }
-
-                if (ready && SlapBattlesRigRangeProxy.IsActiveFor(impact.Actor))
-                {
-                    Fling(impact.Actor, impact.Velocity);
-                    yield return new WaitForSeconds(0.25f);
-                }
-                SlapBattlesRigRangeProxy.Release(PropImpactOwner);
-                yield return new WaitForSeconds(1.1f);
-            }
-        }
-        finally
-        {
-            SlapBattlesRigRangeProxy.Release(PropImpactOwner);
-            PropImpacts.Clear();
-            propImpactRunning = false;
-        }
+        Fling(actorNumber, velocity);
     }
 
     private static IEnumerator TrackProjectile(Vector3 origin, Vector3 velocity, Photon.Realtime.Room room)
@@ -581,15 +699,15 @@ internal static class SlapBattlesNetwork
 
     private static IEnumerator TrackBus(Vector3 origin, Vector3 direction, Photon.Realtime.Room room)
     {
-        float        start = Time.time;
-        HashSet<int> hit   = [];
+        float        start    = Time.time;
+        HashSet<int> hit      = [];
         Vector3      previous = origin;
         while (Time.time - start < 6f && IsInMap && ReferenceEquals(room, PhotonNetwork.CurrentRoom))
         {
             Vector3 point = origin + direction * (16f * (Time.time - start));
             foreach (VRRig rig in NetworkSystem.Instance.Rigs())
             {
-                if (rig?.Creator                                    == null || hit.Contains(rig.Creator.ActorNumber) ||
+                if (rig?.Creator                                               == null || hit.Contains(rig.Creator.ActorNumber) ||
                     DistanceToSegment(rig.transform.position, previous, point) > 3.5f) continue;
 
                 hit.Add(rig.Creator.ActorNumber);
@@ -600,15 +718,18 @@ internal static class SlapBattlesNetwork
             }
 
             previous = point;
+
             yield return null;
         }
     }
 
     private static Vector3 ClosestPointOnSegment(Vector3 point, Vector3 start, Vector3 end)
     {
-        Vector3 segment = end - start;
-        float lengthSquared = segment.sqrMagnitude;
+        Vector3 segment       = end - start;
+        float   lengthSquared = segment.sqrMagnitude;
+
         if (lengthSquared < 0.0001f) return start;
+
         return start + segment * Mathf.Clamp01(Vector3.Dot(point - start, segment) / lengthSquared);
     }
 
@@ -658,12 +779,14 @@ internal static class SlapBattlesNetwork
     private static IEnumerator TrackNuke(Vector3 ground, Photon.Realtime.Room room)
     {
         yield return new WaitForSeconds(5f);
+
         if (!SupportsNewSlaps || !ReferenceEquals(room, PhotonNetwork.CurrentRoom)) yield break;
         foreach (VRRig rig in NetworkSystem.Instance.Rigs())
         {
             if (rig?.Creator == null) continue;
             Vector3 offset = rig.transform.position - ground;
-            Vector3 flat = new(offset.x, 0f, offset.z);
+            Vector3 flat   = new(offset.x, 0f, offset.z);
+
             if (flat.magnitude > 5f || offset.y is < -1f or > 5f) continue;
             if (flat.sqrMagnitude < 0.01f) flat = Vector3.forward;
             PropFling(rig.Creator.ActorNumber, flat.normalized * 32f + Vector3.up * 16f, room);
@@ -679,20 +802,22 @@ internal static class SlapBattlesNetwork
             {
                 if (rig?.Creator == null) continue;
                 Vector3 offset = rig.transform.position - (center + Vector3.up);
+
                 if (offset.magnitude > 3f) continue;
                 offset.y = 0f;
                 if (offset.sqrMagnitude < 0.01f) offset = Vector3.forward;
                 PropFling(rig.Creator.ActorNumber, offset.normalized * 7f + Vector3.up * 3.5f, room);
             }
+
             yield return new WaitForSeconds(1f);
         }
     }
 
     private static IEnumerator TrackOrb(Vector3 origin, Vector3 velocity, bool big, Photon.Realtime.Room room)
     {
-        float start = Time.time;
+        float start  = Time.time;
         float radius = big ? 1.8f : 1.2f;
-        float force = big ? 16f : 13f;
+        float force  = big ? 16f : 13f;
         while (Time.time - start < 2.5f && SupportsNewSlaps && ReferenceEquals(room, PhotonNetwork.CurrentRoom))
         {
             Vector3 point = origin + velocity * (Time.time - start);
@@ -703,8 +828,10 @@ internal static class SlapBattlesNetwork
                 away.y = 0f;
                 if (away.sqrMagnitude < 0.01f) away = velocity;
                 PropFling(rig.Creator.ActorNumber, away.normalized * force + Vector3.up * (force * 0.5f), room);
+
                 yield break;
             }
+
             yield return null;
         }
     }
@@ -724,12 +851,5 @@ internal static class SlapBattlesNetwork
         internal object[]             Payload;
         internal ReceiverGroup        Receivers;
         internal Photon.Realtime.Room Room;
-    }
-
-    private readonly struct PropImpact(int actor, Vector3 velocity, Photon.Realtime.Room room)
-    {
-        internal readonly int Actor = actor;
-        internal readonly Vector3 Velocity = velocity;
-        internal readonly Photon.Realtime.Room Room = room;
     }
 }

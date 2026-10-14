@@ -290,6 +290,8 @@ public class Utils : MonoBehaviour
                     (byte)Random.Range(0,     range),
                     alpha);
 
+    public static bool RandomBoolean() => Random.Range(0, 1) == 1;
+
     public static string CleanString(string input, int maxLength, char[] ignoredChars = null)
     {
         input = new string(Array.FindAll(input.ToCharArray(), character =>

@@ -67,8 +67,7 @@ internal static class SlapBattlesAim
 
 public abstract class SlapBattlesTargetGun : SlapBattlesGun
 {
-    protected override float RepeatDelay => SlapBattlesNetwork.SupportsBoosterWall
-                                                    ? 0.18f : SlapBattlesNetwork.MinimumEventDelay;
+    protected override float RepeatDelay => SlapBattlesNetwork.MinimumEventDelay;
     protected virtual bool UsesSourceRange => false;
     protected virtual float SourceRange => 25f;
 

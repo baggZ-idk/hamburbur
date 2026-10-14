@@ -6,6 +6,7 @@ using hamburbur.GUI;
 using hamburbur.Managers;
 using hamburbur.Mod_Backend;
 using hamburbur.Tools;
+using UnityEngine;
 
 namespace hamburbur.Mods.CustomMaps.SlapBattles;
 
@@ -18,13 +19,15 @@ internal enum SlapBattlesProgressCommand
     UnlockAdminSlap = 5,
     UnlockNamedSlap = 6,
     EquipNamedSlap = 7,
-    TradeHub = 8,
     VisitAdminPanel = 9,
+    SetCorn = 10,
+    AddCorn = 11,
 }
 
 internal static class SlapBattlesLocalProgress
 {
     private static string cachedSlapScript;
+    private static string installedBridgeScript;
     private static (string Name, int Index)[] cachedPlayableSlaps = [];
     private const string EventFunction = "function onEvent(tag, data)";
     private const string EventTag      = "hamburburSlapCmdV1";
@@ -87,13 +90,19 @@ internal static class SlapBattlesLocalProgress
                                                                       break
                                                                   end
                                                               end
-                                                          elseif action == 8 and sceneReady then
-                                                              sendToTradeHub()
                                                           elseif action == 9 and sceneReady then
                                                               grantAdmin()
                                                               if adminPanel then
                                                                   teleportSafely(adminPanel.position + Vec3.new(0, 1, 0), false, false, "lift")
                                                               end
+                                                          elseif action == 10 and isSaveNumber(value) and corn then
+                                                              corn.count = math.min(value, 16777215)
+                                                              local changed = refreshUnlocks()
+                                                              if changed and sceneReady then applyEquipButtonVisibility() end
+                                                              updateCornText()
+                                                              saveSaveData()
+                                                          elseif action == 11 and isSaveNumber(value) and corn then
+                                                              addCorn(value)
                                                           end
                                                       end)
                                                       if not ok then print("SlapBattles local command error: " .. tostring(err)) end
@@ -113,14 +122,26 @@ internal static class SlapBattlesLocalProgress
     internal static bool TrySend(SlapBattlesProgressCommand command, string value)
         => TrySend(command, (object)value);
 
-    private static bool TrySend(SlapBattlesProgressCommand command, object value)
+    private static bool EnsureBridge()
     {
-        string bridge = CustomGameMode.LuaScript?.Contains("function grantAdm()", StringComparison.Ordinal) == true
+        string script = CustomGameMode.LuaScript;
+        if (!SlapBattlesNetwork.IsInMap || CustomGameMode.gameScriptRunner?.ShouldTick != true)
+            return false;
+        if (ReferenceEquals(script, installedBridgeScript)) return true;
+
+        string bridge = script.Contains("function grantAdm()", StringComparison.Ordinal)
                                 ? LocalEventFunctionV11 : LocalEventFunction;
-        if (!SlapBattlesNetwork.IsInMap                                                       ||
-            !CustomMapUtils.TryReplaceCustomScriptFragment(EventFunction, bridge) ||
+        if (!CustomMapUtils.TryReplaceCustomScriptFragment(EventFunction, bridge) ||
             CustomGameMode.gameScriptRunner?.ShouldTick != true)
             return false;
+
+        installedBridgeScript = CustomGameMode.LuaScript;
+        return true;
+    }
+
+    private static bool TrySend(SlapBattlesProgressCommand command, object value)
+    {
+        if (!EnsureBridge()) return false;
 
         // This is an in-memory Lua event, NOT a raise event
         LuauVm.eventQueue.Enqueue([EventTag, (double)command, value,]);
@@ -255,6 +276,50 @@ public class SlapBattlesAddSlaps : hamburburmod
     }
 }
 
+[hamburburmod("Set Candy Corn", "Set and save your Halloween candy corn count, including the new Broom price",
+        ButtonType.Fixed, AccessSetting.Public, EnabledType.Disabled, 0)]
+public class SlapBattlesSetCorn : hamburburmod
+{
+    protected override void Pressed() => ButtonHandler.Instance?.Prompt(new PromptData(
+            PromptType.Keyboard, "Candy corn (0 to 16777215)", Set, null));
+
+    private static void Set(string input)
+    {
+        if (!int.TryParse(input?.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out int amount) ||
+            amount is < 0 or > 16777215)
+        {
+            SlapBattlesLocalProgress.Notify("Enter a whole number from 0 to 16777215.");
+            return;
+        }
+        SlapBattlesLocalProgress.Notify(
+                SlapBattlesNetwork.SupportsAbilityChecks &&
+                SlapBattlesLocalProgress.TrySend(SlapBattlesProgressCommand.SetCorn, amount)
+                        ? $"Candy corn set to {amount} and saved." : "Enter the updated Slap Battles map first.");
+    }
+}
+
+[hamburburmod("Add Candy Corn", "Add candy corn and save it for Halloween slap unlocks",
+        ButtonType.Fixed, AccessSetting.Public, EnabledType.Disabled, 0)]
+public class SlapBattlesAddCorn : hamburburmod
+{
+    protected override void Pressed() => ButtonHandler.Instance?.Prompt(new PromptData(
+            PromptType.Keyboard, "Add candy corn (0 to 16777215)", Add, null));
+
+    private static void Add(string input)
+    {
+        if (!int.TryParse(input?.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out int amount) ||
+            amount is < 0 or > 16777215)
+        {
+            SlapBattlesLocalProgress.Notify("Enter a whole number from 0 to 16777215.");
+            return;
+        }
+        SlapBattlesLocalProgress.Notify(
+                SlapBattlesNetwork.SupportsAbilityChecks &&
+                SlapBattlesLocalProgress.TrySend(SlapBattlesProgressCommand.AddCorn, amount)
+                        ? $"Added {amount} candy corn and saved." : "Enter the updated Slap Battles map first.");
+    }
+}
+
 [hamburburmod("Unlock Slap By Name", "Type a slap name from the current map script to unlock it locally",
         ButtonType.Fixed, AccessSetting.Public, EnabledType.Disabled, 0)]
 public class SlapBattlesUnlockNamedSlap : hamburburmod
@@ -295,15 +360,6 @@ public class SlapBattlesEquipNamedSlap : hamburburmod
     }
 }
 
-[hamburburmod("Go To Trade Hub", "Travel to the updated map's trading hub",
-        ButtonType.Fixed, AccessSetting.Public, EnabledType.Disabled, 0)]
-public class SlapBattlesTradeHub : hamburburmod
-{
-    protected override void Pressed() => SlapBattlesLocalProgress.Notify(
-            SlapBattlesLocalProgress.TrySend(SlapBattlesProgressCommand.TradeHub)
-                    ? "Traveling to the trade hub." : "Wait for the map script to start.");
-}
-
 [hamburburmod("Go To Admin Panel", "Show your local AdminPanel and travel to it",
         ButtonType.Fixed, AccessSetting.Public, EnabledType.Disabled, 0)]
 public class SlapBattlesVisitAdminPanel : hamburburmod
@@ -313,23 +369,26 @@ public class SlapBattlesVisitAdminPanel : hamburburmod
                     ? "Opening the admin panel." : "Wait for the map script to start.");
 }
 
-[hamburburmod("Kill Credit Gun", "Give a targeted Kill Streak Slap holder one kill credit",
-        ButtonType.Togglable, AccessSetting.Public, EnabledType.Disabled, 0)]
-public class SlapBattlesKillCreditGun : SlapBattlesTargetGun
+[hamburburmod("Golden Slapples", "Fill the five Slapple spots with 100 slap gold fruit",
+        ButtonType.Fixed, AccessSetting.Public, EnabledType.Disabled, 0)]
+public class SlapBattlesGoldenSlapples : hamburburmod
 {
-    protected override float RepeatDelay => SlapBattlesNetwork.MinimumEventDelay;
-    protected override void Use(VRRig rig) => SlapBattlesNetwork.KillCredit(rig.Creator.ActorNumber);
+    protected override void Pressed() => SlapBattlesNetwork.SpawnGoldenSlapples();
 }
 
-[hamburburmod("Kill Credit All", "Give every other Kill Streak holder one map kill credit",
-        ButtonType.Fixed, AccessSetting.Public, EnabledType.Disabled, 0)]
-public class SlapBattlesKillCreditAll : hamburburmod
+[hamburburmod("Golden Slapple Restock", "Keep the five gold Slapple spots stocked while enabled",
+        ButtonType.Togglable, AccessSetting.Public, EnabledType.Disabled, 0)]
+public class SlapBattlesGoldenSlappleRestock : hamburburmod
 {
-    protected override void Pressed()
+    private float nextRestock;
+
+    protected override void OnEnable() => nextRestock = 0f;
+
+    protected override void Update()
     {
-        if (!SlapBattlesNetwork.SupportsNewSlaps || NetworkSystem.Instance == null) return;
-        foreach (VRRig rig in NetworkSystem.Instance.Rigs())
-            if (rig?.Creator != null)
-                SlapBattlesNetwork.KillCredit(rig.Creator.ActorNumber);
+        if (!SlapBattlesNetwork.SupportsAbilityChecks ||
+            CustomGameMode.gameScriptRunner?.ShouldTick != true || Time.realtimeSinceStartup < nextRestock) return;
+        nextRestock = Time.realtimeSinceStartup + 2.5f;
+        SlapBattlesNetwork.SpawnGoldenSlapples();
     }
 }

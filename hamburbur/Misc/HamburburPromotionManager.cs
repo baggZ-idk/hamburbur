@@ -2,29 +2,30 @@ using hamburbur.Components;
 using hamburbur.Tools;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace hamburbur.Misc;
 
 public class HamburburPromotionManager : Singleton<HamburburPromotionManager>
 {
-    public  GameObject Fin;
-    private GameObject stumpObj;
+    public GameObject RandomAssPoster;
+    private                              GameObject stumpObj;
 
     private void Start()
     {
-        Fin                      = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        Fin.transform.localScale = new Vector3(0.8f,    0.9f, 0.0001f);
-        Fin.transform.position   = new Vector3(-64.72f, 12f,  -84.72f);
-        Fin.transform.rotation   = Quaternion.Euler(0f, 271.63f, 0f);
+        RandomAssPoster                      = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        RandomAssPoster.transform.localScale = new Vector3(0.8f,    0.9f, 0.0001f);
+        RandomAssPoster.transform.position   = new Vector3(-64.72f, 12f,  -84.72f);
+        RandomAssPoster.transform.rotation   = Quaternion.Euler(0f, 271.63f, 0f);
 
-        if (Fin.TryGetComponent(out Collider collider)) collider.Obliterate();
+        if (RandomAssPoster.TryGetComponent(out Collider collider)) collider.Obliterate();
 
-        if (!Fin.TryGetComponent(out Renderer renderer))
+        if (!RandomAssPoster.TryGetComponent(out Renderer renderer))
             return;
 
         renderer.sharedMaterial.shader      = Shaders.UberShader;
-        renderer.sharedMaterial.mainTexture = Tools.Utils.LoadEmbeddedImage("fin.png");
+        renderer.sharedMaterial.mainTexture = Plugin.Instance.HamburburBundle.LoadAsset<Texture2D>(Tools.Utils.RandomBoolean() ? "fin" : "amen");
         renderer.sharedMaterial.EnableKeyword("_USE_TEXTURE");
         renderer.sharedMaterial.color = Color.white;
     }

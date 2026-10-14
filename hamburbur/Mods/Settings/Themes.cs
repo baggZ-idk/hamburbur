@@ -501,6 +501,42 @@ public class Themes : hamburburmod
             ),
     ];
 
+    static Themes()
+    {
+        switch (DateTime.Now.Month)
+        {
+            // October - Halloween theme
+            case 10:
+                AllThemes.Insert(0, (
+                                        "halloburbur",
+                                        "halloburbur",
+                                        Vector3.zero,
+                                        Quaternion.identity,
+                                        new Color(0f, 0f, 0f, 0f),
+                                        new Color(0f, 0f, 0f, 0f),
+                                        -0.29f,
+                                        false
+                                    ));
+
+                break;
+
+            // December - Christmas theme
+            case 12:
+                AllThemes.Insert(0, (
+                                        "jollyburbur",
+                                        "Jollyburbur",
+                                        Vector3.zero,
+                                        Quaternion.Euler(0f, 270f, 270f),
+                                        new Color(0.02f, 0.10f, 0.28f, 1f),
+                                        new Color(0.15f, 0.70f, 1f,    1f),
+                                        -0.29f,
+                                        true
+                                    ));
+
+                break;
+        }
+    }
+
     public static   Themes Instance               { get; private set; }
     internal static bool   IsSynchronizingButtons { get; private set; }
 
@@ -519,10 +555,6 @@ public class Themes : hamburburmod
     protected override void Start()
     {
         Instance = this;
-
-        // October - Halloween theme
-        if (DateTime.Now.Month == 10)
-            AllThemes.Insert(0, ("halloburbur", "halloburbur", Vector3.zero, Quaternion.identity, new Color(0f, 0f, 0f, 0f), new Color(0f, 0f, 0f, 0f), -0.29f, false));
 
         IncrementalValue = NormalizeIndex(IncrementalValue);
         CoroutineManager.Instance?.StartCoroutine(SynchronizeButtonsAfterStartup());

@@ -196,8 +196,8 @@ public class Plugin : MonoBehaviour
         HamburgerSound = HamburburBundle.LoadAsset<AudioClip>("hamburger");
         PlaySound(HamburgerSound);
 
-        HamburburIcon = Tools.Utils.LoadEmbeddedImage("hamburbur.png");
-        ErrorIcon     = Tools.Utils.LoadEmbeddedImage("error.png");
+        HamburburIcon = HamburburBundle.LoadAsset<Texture2D>("hamburburStatus");
+        ErrorIcon     = HamburburBundle.LoadAsset<Texture2D>("errorStatus");
 
         FirstPersonCamera = GTPlayer.Instance.mainCamera;
         ThirdPersonCamera = GorillaTagger.Instance.thirdPersonCamera?.transform.GetChild(0)?.GetComponent<Camera>();
