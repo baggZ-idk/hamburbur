@@ -1,8 +1,10 @@
+using System.Collections;
 using GorillaLocomotion.Gameplay;
 using GorillaTagScripts;
 using hamburbur.Libs;
 using hamburbur.Managers;
 using hamburbur.Mod_Backend;
+using Photon.Pun;
 using UnityEngine;
 
 namespace hamburbur.Mods.OP;
@@ -43,7 +45,7 @@ public static class HalloweenInteractables
     {
         get
         {
-            const string BroomsticksPath = "Environment Objects/LocalObjects_Prefab/Forest/2026_Halloween_Forest/Broomsticks/";
+            const string BroomsticksPath = "Environment Objects/LocalObjects_Prefab/Forest/2026_Halloween_Forest/Broomsticks";
 
             return [
                            GameObject.Find(BroomsticksPath + "/Broomstick2/NoncontrollableBroomstick").GetComponent<NoncontrollableBroomstick>(),
@@ -51,13 +53,36 @@ public static class HalloweenInteractables
                    ];
         }
     }
+
+    public static void LucyAttack(NetPlayer target)
+    {
+        HalloweenGhostChaser lucy = Lucy;
+
+        if (Tools.Utils.IsMasterClient || lucy.IsMine)
+        {
+            if (lucy.targetPlayer != target)
+            {
+                lucy.currentState = HalloweenGhostChaser.ChaseState.Dormant;
+                Tools.Utils.SendSerialize(lucy.GetView);
+            }
+
+            lucy.isSummoned   = Tools.Utils.RandomBoolean();
+            lucy.currentState = HalloweenGhostChaser.ChaseState.Grabbing;
+            lucy.grabTime     = Time.time;
+            lucy.targetPlayer = target;
+        }
+        else
+        {
+            NotificationManager.SendNotification("<color=red>Error</color>", "You are not master client", 3f, true, false);
+        }
+    }
 }
 
-[hamburburmod("Enable Halloween Terraformer", "Enabled the 'Terraformer' from the halloween update", ButtonType.Togglable, AccessSetting.Public, EnabledType.Disabled, 0)]
-public class EnableTerraformer : hamburburmod
+[hamburburmod("Disable Halloween Terraformer", "Disables the 'Terraformer' from the halloween update", ButtonType.Togglable, AccessSetting.Public, EnabledType.Disabled, 0)]
+public class DisableTerraformer : hamburburmod
 {
-    protected override void OnEnable() => HalloweenInteractables.Terraformer.SetActive(true);
-    protected override void OnDisable() => HalloweenInteractables.Terraformer.SetActive(false);
+    protected override void OnEnable() => HalloweenInteractables.Terraformer.SetActive(false);
+    protected override void OnDisable() => HalloweenInteractables.Terraformer.SetActive(true);
 }
 
 [hamburburmod("Spawn Lucy [M]", "Spawns the Blue Lucy", ButtonType.Fixed, AccessSetting.Public, EnabledType.Disabled, 0)]
@@ -77,6 +102,60 @@ public class SpawnLucy : hamburburmod
         lucy.timeGongStarted = Time.time;
         lucy.currentState    = HalloweenGhostChaser.ChaseState.Gong;
         lucy.isSummoned      = false;
+    }
+}
+
+[hamburburmod("Fast Lucy [M]", "Makes lucy fast", ButtonType.Fixed, AccessSetting.Public, EnabledType.Disabled, 0)]
+public class FastLucy : hamburburmod
+{
+    protected override void Pressed()
+    {
+        HalloweenGhostChaser lucy = HalloweenInteractables.Lucy;
+
+        if (!Tools.Utils.IsMasterClient || !lucy.IsMine)
+        {
+            NotificationManager.SendNotification("<color=red>Error</color>", "You are not master client", 3f, true, false);
+
+            return;
+        }
+
+        lucy.currentSpeed = 15f;
+    }
+}
+
+[hamburburmod("Slow Lucy [M]", "Makes lucy slow", ButtonType.Fixed, AccessSetting.Public, EnabledType.Disabled, 0)]
+public class SlowLucy : hamburburmod
+{
+    protected override void Pressed()
+    {
+        HalloweenGhostChaser lucy = HalloweenInteractables.Lucy;
+
+        if (!Tools.Utils.IsMasterClient || !lucy.IsMine)
+        {
+            NotificationManager.SendNotification("<color=red>Error</color>", "You are not master client", 3f, true, false);
+
+            return;
+        }
+
+        lucy.currentSpeed = 1f;
+    }
+}
+
+[hamburburmod("Freeze Lucy [M]", "Makes lucy frozen", ButtonType.Fixed, AccessSetting.Public, EnabledType.Disabled, 0)]
+public class FreezeLucy : hamburburmod
+{
+    protected override void Pressed()
+    {
+        HalloweenGhostChaser lucy = HalloweenInteractables.Lucy;
+
+        if (!Tools.Utils.IsMasterClient || !lucy.IsMine)
+        {
+            NotificationManager.SendNotification("<color=red>Error</color>", "You are not master client", 3f, true, false);
+
+            return;
+        }
+
+        lucy.currentSpeed = 0f;
     }
 }
 
@@ -114,6 +193,85 @@ public class LucyChaseGun : hamburburmod
     }
 
     protected override void OnDisable() => gunLib.OnDisable();
+}
+
+[hamburburmod("Lucy Attack Gun [M]" ,"Makes lucy attack the targer", ButtonType.Togglable, AccessSetting.Public, EnabledType.Disabled, 0)]
+public class LucyAttackGun : hamburburmod
+{
+    private readonly GunLib gunLib = new() { ShouldFollow = true, };
+
+    private float lastTime;
+
+    protected override void Start() => gunLib.Start();
+
+    protected override void LateUpdate()
+    {
+        gunLib.LateUpdate();
+
+        if (!gunLib.IsShooting || gunLib.ChosenRig == null || !(lastTime + 0.5f < Time.time))
+            return;
+
+        HalloweenInteractables.LucyAttack(gunLib.ChosenRig.creator);
+            
+        lastTime = Time.time;
+    }
+
+    protected override void OnDisable() => gunLib.OnDisable();
+}
+
+[hamburburmod("Lucy Attack All [M]" ,"Makes lucy attack the targer", ButtonType.Togglable, AccessSetting.Public, EnabledType.Disabled, 0)]
+public class LucyAttackAll : hamburburmod
+{
+    private float lastTime;
+
+    protected override void LateUpdate()
+    {
+        if (!(lastTime + 0.1f < Time.time))
+            return;
+
+        HalloweenInteractables.LucyAttack(PhotonNetwork.PlayerListOthers[Random.Range(0, PhotonNetwork.PlayerListOthers.Length)]);
+            
+        lastTime = Time.time;
+    }
+}
+
+[hamburburmod("Spam Lucy Gong [M]" ,"Spams the lucy grave gong noise", ButtonType.Togglable, AccessSetting.Public, EnabledType.Disabled, 0)]
+public class SpamLucyGong : hamburburmod
+{
+    private float lastTime;
+
+    protected override void Update()
+    {
+        if (!(lastTime + 0.2f < Time.time))
+            return;
+        
+        HalloweenGhostChaser lucy = HalloweenInteractables.Lucy;
+
+        if (!Tools.Utils.IsMasterClient || !lucy.IsMine)
+        {
+            NotificationManager.SendNotification("<color=red>Error</color>", "You are not master client", 3f, true, false);
+            Toggle(ButtonState.Normal, false);
+            
+            return;
+        }
+
+        CoroutineManager.Instance.StartCoroutine(DoubleGongIt(lucy));
+            
+        lastTime = Time.time;
+    }
+
+    private static IEnumerator DoubleGongIt(HalloweenGhostChaser lucy)
+    {
+        lucy.timeGongStarted = Time.time;
+        lucy.currentState    = HalloweenGhostChaser.ChaseState.Gong;
+        lucy.isSummoned      = false;
+
+        yield return new WaitForSeconds(0.1f);
+        
+        lucy.currentState = HalloweenGhostChaser.ChaseState.Chasing;
+        lucy.targetPlayer = PhotonNetwork.PlayerList[Random.Range(0, PhotonNetwork.PlayerList.Length)];
+        lucy.followTarget = VRRig.LocalRig.head.rigTarget;
+    }
 }
 
 [hamburburmod("Fast Broomsticks [M]", "Makes the broomsticks fast", ButtonType.Togglable, AccessSetting.Public, EnabledType.Disabled, 0)]

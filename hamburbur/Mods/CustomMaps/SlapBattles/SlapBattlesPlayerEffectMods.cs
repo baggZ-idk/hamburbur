@@ -71,11 +71,7 @@ public class SlapBattlesEmpPulse : hamburburmod
     protected override void Pressed()
     {
         if (!SlapBattlesNetwork.IsInMap) return;
-        Vector3 center = SlapBattlesAim.Body;
-        SlapBattlesNetwork.EmpShock(center);
-        foreach (VRRig rig in NetworkSystem.Instance.Rigs())
-            if (rig?.Creator != null && Vector3.Distance(center, rig.transform.position) <= 14f)
-                SlapBattlesNetwork.TargetEffect("empd", rig.Creator.ActorNumber);
+        SlapBattlesNetwork.EmpPulse(SlapBattlesAim.Body);
     }
 }
 
@@ -180,13 +176,7 @@ public class SlapBattlesStopwatchGun : SlapBattlesTargetGun
         ButtonType.Fixed, AccessSetting.Public, EnabledType.Disabled, 0)]
 public class SlapBattlesStopwatchAll : hamburburmod
 {
-    protected override void Pressed()
-    {
-        if (!SlapBattlesNetwork.SupportsNewSlaps) return;
-        foreach (VRRig rig in NetworkSystem.Instance.Rigs())
-            if (rig?.Creator != null)
-                SlapBattlesNetwork.Stopwatch(rig.Creator.ActorNumber);
-    }
+    protected override void Pressed() => SlapBattlesNetwork.StopwatchAll();
 }
 
 [hamburburmod("Error Screen Gun", "Show the map's Error Slap message to a targeted player",

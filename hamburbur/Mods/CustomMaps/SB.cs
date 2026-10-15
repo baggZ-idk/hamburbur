@@ -1,6 +1,8 @@
 using hamburbur.GUI;
 using hamburbur.Mod_Backend;
 
+namespace hamburbur.Mods.CustomMaps;
+
 [hamburburmod(                "Slap Battles",       "Open Slap Battles custom map mods", ButtonType.Fixed,
         AccessSetting.Public, EnabledType.Disabled, 0)]
 public class SB : hamburburmod
