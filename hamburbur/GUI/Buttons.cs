@@ -242,6 +242,7 @@ public static class Buttons
                     (typeof(AntiTagFreeze), null),
                     (typeof(DisableQuitBox), null),
                     (typeof(PhysicalQuitBox), null),
+                    (typeof(Beyblade), null),
             ],
 
             [nameof(Room)] =
@@ -353,7 +354,6 @@ public static class Buttons
                     (typeof(SmoothRig), null),
                     (typeof(CopyMovementGun), null),
                     (typeof(ShadowCloneGun), null),
-                    (typeof(Beyblade), null),
             ],
 
             [EvolvingCosmeticManager.CategoryName] = [],

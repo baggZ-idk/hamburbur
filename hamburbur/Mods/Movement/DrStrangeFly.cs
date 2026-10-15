@@ -20,7 +20,7 @@ public class DrStrangeFly : hamburburmod
         Vector3 handL = GorillaTagger.Instance.leftHandTransform.position;
 
         GTPlayer.Instance.AddForce(
-                (handR - handL) * (ChangeFlySpeed.Instance.IncrementalValue / 10f),
+                (handR - handL) * (ChangeFlySpeed.Instance.IncrementalValue / 20f),
                 ForceMode.VelocityChange);
 
         GTPlayer.Instance.AddForce(-Physics.gravity, ForceMode.Acceleration);
